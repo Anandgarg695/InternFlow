@@ -16,7 +16,7 @@ Never start a later phase before the earlier one works.
 
 ## Sprint 1: Foundation
 - [x] Project folder + Git initialized
-- [ ] React + Vite frontend created
+- [x] React + Vite frontend created
 - [ ] Spring Boot backend created
 - [ ] PostgreSQL running in Docker
 - [ ] Backend connected to database
