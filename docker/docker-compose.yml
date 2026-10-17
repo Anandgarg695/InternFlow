@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: internflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: internflow
+      POSTGRES_USER: internflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-internflow_dev}
+    ports:
+      - "5433:5432"
+    volumes:
+      - internflow-pgdata:/var/lib/postgresql/data
+
+volumes:
+  internflow-pgdata:

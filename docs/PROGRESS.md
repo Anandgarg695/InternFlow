@@ -1,7 +1,7 @@
 # InternFlow Progress Tracker
 
-**Last updated:** 2026-10-04
-**Current phase:** Sprint 1, Foundation
+**Last updated:** 2026-10-17
+**Current phase:** Sprint 1, Foundation (nearly done)
 
 ## How we work
 Phase → Build → Test → Checkpoint → Commit → Push → Next phase.
@@ -16,19 +16,38 @@ Never start a later phase before the earlier one works.
 
 ## Sprint 1: Foundation
 - [x] Project folder + Git initialized
-- [x] React + Vite frontend created
-- [x] Spring Boot backend created
-- [ ] PostgreSQL running in Docker
-- [ ] Backend connected to database
-- [x] /api/health endpoint working
-- [ ] Frontend calls backend successfully
+- [x] React + Vite frontend created (Tailwind, Axios, Redux Toolkit, React Router installed)
+- [x] Spring Boot backend created (Spring Boot 4.1.1, Java 21, Maven)
+- [x] PostgreSQL running in Docker
+- [x] Backend connected to database
+- [x] `/api/health` endpoint working (checks the database too)
+- [x] Frontend calls backend successfully
+- [ ] Push project to GitHub
+- [ ] Flyway migrations set up
 - [ ] User + Role entities
 - [ ] Registration, Login, JWT
 - [ ] RBAC + role-based dashboards
-- [ ] Pushed to GitHub
 
 ## Next step
-Create the React frontend (see Sprint 1 plan).
+1. Create the GitHub repository and push this project.
+2. Then: add Flyway and create the User and Role tables.
+
+## How to run the project (every time)
+1. Open **Docker Desktop** and wait for "Engine running".
+2. Database: `docker compose -f docker/docker-compose.yml up -d` (from the project root).
+3. Backend: `cd backend`, then `.\mvnw.cmd spring-boot:run` (runs on port 8081).
+4. Frontend: `cd frontend`, `npm install` (first time only), then `npm run dev` (runs on port 5173).
+5. Open http://localhost:5173. You should see "Backend: UP | Database: UP".
+
+## Ports
+- Frontend: 5173
+- Backend: 8081 (8080 is used by a Windows service on Anand's machine)
+- PostgreSQL: 5433 on the host (maps to 5432 inside Docker, to avoid clashing with a locally installed PostgreSQL)
 
 ## Notes for teammate
 - Backend runs on port 8081 (port 8080 is taken by a Windows service on My machine). Frontend is on 5173.
+- Database name/user: `internflow`. Local dev password: `internflow_dev` (development only, never use in production).
+- The backend forces the UTC timezone in `BackendApplication.java`, because the Indian system timezone name "Asia/Calcutta" is rejected by PostgreSQL 16.
+- Hibernate is set to `ddl-auto=validate`: tables are never created automatically. We will create them with Flyway migrations.
+- Always run git commands from the project root (`InternFlow`), not from inside `frontend` or `backend`.
+- Add updates about the project below this line.
