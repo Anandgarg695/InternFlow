@@ -17,10 +17,10 @@ Never start a later phase before the earlier one works.
 ## Sprint 1: Foundation
 - [x] Project folder + Git initialized
 - [x] React + Vite frontend created
-- [ ] Spring Boot backend created
+- [x] Spring Boot backend created
 - [ ] PostgreSQL running in Docker
 - [ ] Backend connected to database
-- [ ] `/api/health` endpoint working
+- [x] /api/health endpoint working
 - [ ] Frontend calls backend successfully
 - [ ] User + Role entities
 - [ ] Registration, Login, JWT
@@ -31,4 +31,4 @@ Never start a later phase before the earlier one works.
 Create the React frontend (see Sprint 1 plan).
 
 ## Notes for teammate
-(Akash here you will find update of project)
+- Backend runs on port 8081 (port 8080 is taken by a Windows service on My machine). Frontend is on 5173.
