@@ -22,7 +22,7 @@ Never start a later phase before the earlier one works.
 - [x] Backend connected to database
 - [x] `/api/health` endpoint working (checks the database too)
 - [x] Frontend calls backend successfully
-- [ ] Push project to GitHub
+- [x] Push project to GitHub
 - [ ] Flyway migrations set up
 - [ ] User + Role entities
 - [ ] Registration, Login, JWT
@@ -51,3 +51,5 @@ Never start a later phase before the earlier one works.
 - Hibernate is set to `ddl-auto=validate`: tables are never created automatically. We will create them with Flyway migrations.
 - Always run git commands from the project root (`InternFlow`), not from inside `frontend` or `backend`.
 - Add updates about the project below this line.
+- Repository: https://github.com/Anandgarg695/InternFlow (public). Never commit secrets; use environment variables.
+- Daily routine: git pull before starting, git add . / git commit / git pull / git push when done.
