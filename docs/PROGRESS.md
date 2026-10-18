@@ -25,12 +25,14 @@ Never start a later phase before the earlier one works.
 - [x] Push project to GitHub
 - [x] Flyway migrations set up
 - [x] User + Role entities
-- [ ] Registration, Login, JWT
-- [ ] RBAC + role-based dashboards
+- [x] Registration, Login, JWT (backend)
+- [x] Role-protected API endpoints (RBAC): /api/student, /api/company, /api/mentor, /api/admin
+- [ ] Login/Register pages and role-based dashboards (frontend)
 
 ## Next step
 1. Create the GitHub repository and push this project.
 2. Then: add Flyway and create the User and Role tables.
+3. Build the login and register pages and role-based dashboards in React.
 
 ## How to run the project (every time)
 1. Open **Docker Desktop** and wait for "Engine running".
@@ -54,3 +56,9 @@ Never start a later phase before the earlier one works.
 - Repository: https://github.com/Anandgarg695/InternFlow (public). Never commit secrets; use environment variables.
 - Daily routine: git pull before starting, git add . / git commit / git pull / git push when done.
 - Database changes only through Flyway files in backend/src/main/resources/db/migration (V1__, V2__, ...). Never edit a migration that has been pushed; add a new one instead.
+- JWT secret setup (required before the backend starts): copy backend/src/main/resources/application-local.properties.example to application-local.properties in the same folder and replace the value with a random string. Generate one in PowerShell:
+$bytes = New-Object byte[] 48
+[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
+That file is git-ignored. NEVER commit a real secret (the repo is public). In production use the JWT_SECRET environment variable.
+- Public registration allows STUDENT, COMPANY, MENTOR only. Admin accounts are never self-registered.

@@ -1,0 +1,3 @@
+# Copy this file to application-local.properties (same folder) and replace the value.
+# Generate a secret with the PowerShell commands in docs/PROGRESS.md. Never commit the real file.
+app.jwt.secret=CHANGE-ME-USE-A-RANDOM-STRING-OF-AT-LEAST-32-CHARACTERS
