@@ -23,8 +23,8 @@ Never start a later phase before the earlier one works.
 - [x] `/api/health` endpoint working (checks the database too)
 - [x] Frontend calls backend successfully
 - [x] Push project to GitHub
-- [ ] Flyway migrations set up
-- [ ] User + Role entities
+- [x] Flyway migrations set up
+- [x] User + Role entities
 - [ ] Registration, Login, JWT
 - [ ] RBAC + role-based dashboards
 
@@ -53,3 +53,4 @@ Never start a later phase before the earlier one works.
 - Add updates about the project below this line.
 - Repository: https://github.com/Anandgarg695/InternFlow (public). Never commit secrets; use environment variables.
 - Daily routine: git pull before starting, git add . / git commit / git pull / git push when done.
+- Database changes only through Flyway files in backend/src/main/resources/db/migration (V1__, V2__, ...). Never edit a migration that has been pushed; add a new one instead.
