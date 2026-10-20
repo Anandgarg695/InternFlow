@@ -27,12 +27,13 @@ Never start a later phase before the earlier one works.
 - [x] User + Role entities
 - [x] Registration, Login, JWT (backend)
 - [x] Role-protected API endpoints (RBAC): /api/student, /api/company, /api/mentor, /api/admin
-- [ ] Login/Register pages and role-based dashboards (frontend)
+- [x] Login/Register pages and role-based dashboards (frontend)
 
 ## Next step
 1. Create the GitHub repository and push this project.
 2. Then: add Flyway and create the User and Role tables.
 3. Build the login and register pages and role-based dashboards in React.
+4. Student and company profiles, then internship posting (Milestone 1).
 
 ## How to run the project (every time)
 1. Open **Docker Desktop** and wait for "Engine running".
@@ -62,3 +63,4 @@ $bytes = New-Object byte[] 48
 [Convert]::ToBase64String($bytes)
 That file is git-ignored. NEVER commit a real secret (the repo is public). In production use the JWT_SECRET environment variable.
 - Public registration allows STUDENT, COMPANY, MENTOR only. Admin accounts are never self-registered.
+- Frontend auth: token + user stored in localStorage (key internflow_auth), Redux slice in src/store, protected routes in src/components/ProtectedRoute.jsx. Frontend route guards are only for UX; the backend enforces access.

@@ -1,32 +1,38 @@
-import { useEffect, useState } from 'react'
-import api from './services/Api'
+import { Route, Routes } from 'react-router-dom'
+import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
+import Home from './pages/Home'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import StudentDashboard from './pages/StudentDashboard'
+import CompanyDashboard from './pages/CompanyDashboard'
+import MentorDashboard from './pages/MentorDashboard'
+import AdminDashboard from './pages/AdminDashboard'
 
 function App() {
-  const [health, setHealth] = useState(null)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    api.get('/health')
-      .then((res) => setHealth(res.data))
-      .catch(() => setError(true))
-  }, [])
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="bg-white p-8 rounded-xl shadow text-center">
-        <h1 className="text-3xl font-bold text-indigo-600">InternFlow</h1>
-        <p className="mt-2 text-slate-600">Frontend is running.</p>
-        <p className="mt-4 text-sm">
-          {error && <span className="text-red-600">Backend not reachable</span>}
-          {!error && !health && <span className="text-slate-500">Checking backend...</span>}
-          {health && (
-            <span className="text-green-600">
-              Backend: {health.status} | Database: {health.database}
-            </span>
-          )}
-        </p>
-      </div>
-    </div>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        <Route element={<ProtectedRoute role="STUDENT" />}>
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+        </Route>
+        <Route element={<ProtectedRoute role="COMPANY" />}>
+          <Route path="/company/dashboard" element={<CompanyDashboard />} />
+        </Route>
+        <Route element={<ProtectedRoute role="MENTOR" />}>
+          <Route path="/mentor/dashboard" element={<MentorDashboard />} />
+        </Route>
+        <Route element={<ProtectedRoute role="ADMIN" />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
+
+        <Route path="*" element={<p className="text-center text-slate-600">Page not found</p>} />
+      </Route>
+    </Routes>
   )
 }
 

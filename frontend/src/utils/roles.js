@@ -1,0 +1,1 @@
+export const dashboardPath = (role) => `/${role.toLowerCase()}/dashboard`
