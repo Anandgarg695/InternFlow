@@ -10,6 +10,10 @@ import CompanyDashboard from './pages/CompanyDashboard'
 import MentorDashboard from './pages/MentorDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import CompanyProfile from './pages/CompanyProfile'
+import CompanyInternships from './pages/CompanyInternships'
+import InternshipForm from './pages/InternshipForm'
+import StudentInternships from './pages/StudentInternships'
+import InternshipDetail from './pages/InternshipDetail'
 
 function App() {
   return (
@@ -22,10 +26,15 @@ function App() {
         <Route element={<ProtectedRoute role="STUDENT" />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/student/profile" element={<StudentProfile />} />
+          <Route path="/student/internships" element={<StudentInternships />} />
+          <Route path="/student/internships/:id" element={<InternshipDetail />} />
         </Route>
         <Route element={<ProtectedRoute role="COMPANY" />}>
           <Route path="/company/dashboard" element={<CompanyDashboard />} />
           <Route path="/company/profile" element={<CompanyProfile />} />
+          <Route path="/company/internships" element={<CompanyInternships />} />
+          <Route path="/company/internships/new" element={<InternshipForm />} />
+          <Route path="/company/internships/:id/edit" element={<InternshipForm />} />
         </Route>
         <Route element={<ProtectedRoute role="MENTOR" />}>
           <Route path="/mentor/dashboard" element={<MentorDashboard />} />
