@@ -19,4 +19,4 @@ Roles: Student, Company, Mentor, Admin.
 See [docs/PROGRESS.md](docs/PROGRESS.md) for what is done and what to do next.
 
 ## How to Run
-See the "How to run the project" section in [docs/PROGRESS.md](docs/PROGRESS.md).
+See [docs/SETUP.md](docs/SETUP.md) to run the project and [docs/PROGRESS.md](docs/PROGRESS.md) for the current status.
