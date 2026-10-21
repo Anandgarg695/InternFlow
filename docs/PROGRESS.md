@@ -7,8 +7,8 @@
 ## 1. Status at a glance
 - Sprint 1 (foundation) is finished.
 - Phase 2 (database, auth, roles, dashboards) is finished.
-- Student profile is built and being tested on branch `feature/student-profile`.
-- Next: company profile, then internship posting.
+- Student profile and company profile are built.
+- Next: internship posting.
 
 ## 2. Milestones
 - [ ] Milestone 1: Basic platform (auth, RBAC, profiles, internship CRUD) - in progress
@@ -24,6 +24,9 @@
 - [x] Spring Boot 4.1.1 backend (Java 21, Maven)
 - [x] PostgreSQL 16 in Docker, backend connected
 - [x] `GET /api/health` (also checks the database)
+**Phase 3: Profiles**
+- [x] Student profile (V2): `GET/PUT /api/student/profile`, page `/student/profile`
+- [x] Company profile (V3): `GET/PUT /api/company/profile`, page `/company/profile`
 
 **Phase 2: Database and authentication**
 - [x] Flyway migrations (V1: roles and users)
@@ -32,16 +35,13 @@
 - [x] Login and Register pages, protected routes, one dashboard per role
 
 ## 4. In progress
-- [ ] Student profile (branch `feature/student-profile`): V2 migration, `GET/PUT /api/student/profile`, page `/student/profile`
-  - Tick this and merge the pull request after all tests pass.
+- Nothing in progress. Pick the next item from section 5.
 
 ## 5. Up next (in order)
-1. Merge the student profile pull request.
-2. Company profile (V3 migration, `/api/company/profile`, page `/company/profile`).
-3. Internship posting by companies (create, edit, close) and browsing by students.
-4. Resume upload (needs file storage).
-5. Mentor profile (optional for now).
-6. Applications, then screening, tests and interviews (Milestone 2).
+1. Internship posting by companies (create, edit, close) and browsing by students.
+2. Resume upload (needs file storage).
+3. Mentor profile (optional for now).
+4. Applications, then screening, tests and interviews (Milestone 2).
 
 ## 6. What exists right now
 
@@ -50,8 +50,9 @@
 | Migration | Tables |
 |---|---|
 | V1 | `roles` (STUDENT, COMPANY, MENTOR, ADMIN), `users` |
-| V2 | `student_profiles` (in progress) |
-| V3 | reserved for `company_profiles` |
+| V2 |student_profiles |
+| V3 | company_profiles |
+| V4 | reserved for internships
 
 **API endpoints**
 
@@ -61,7 +62,8 @@
 | POST | `/api/auth/register` | anyone (STUDENT, COMPANY, MENTOR only) |
 | POST | `/api/auth/login` | anyone |
 | GET | `/api/auth/me` | any logged-in user |
-| GET, PUT | `/api/student/profile` | STUDENT (in progress) |
+| GET, PUT | `/api/student/profile` | STUDENT |
+| GET, PUT | /api/company/profile | COMPANY |
 | GET | `/api/student/ping`, `/api/company/ping`, `/api/mentor/ping`, `/api/admin/ping` | the matching role (test endpoints) |
 
 **Frontend routes**
