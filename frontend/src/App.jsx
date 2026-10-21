@@ -1,3 +1,4 @@
+import StudentProfile from './pages/StudentProfile'
 import { Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -19,6 +20,7 @@ function App() {
 
         <Route element={<ProtectedRoute role="STUDENT" />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
         </Route>
         <Route element={<ProtectedRoute role="COMPANY" />}>
           <Route path="/company/dashboard" element={<CompanyDashboard />} />
@@ -36,4 +38,4 @@ function App() {
   )
 }
 
-export default App
+export default App 
