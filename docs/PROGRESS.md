@@ -1,66 +1,128 @@
 # InternFlow Progress Tracker
 
-**Last updated:** 2026-10-17
-**Current phase:** Sprint 1, Foundation (nearly done)
+**Last updated:** 2026-10-21
+**Current phase:** Phase 3, Profiles (Milestone 1)
+**Repository:** https://github.com/Anandgarg695/InternFlow (public)
 
-## How we work
-Phase → Build → Test → Checkpoint → Commit → Push → Next phase.
-Never start a later phase before the earlier one works.
+## 1. Status at a glance
+- Sprint 1 (foundation) is finished.
+- Phase 2 (database, auth, roles, dashboards) is finished.
+- Student profile is built and being tested on branch `feature/student-profile`.
+- Next: company profile, then internship posting.
 
-## Milestones
-- [ ] Milestone 1: Basic platform (auth, RBAC, profiles, internship CRUD)
+## 2. Milestones
+- [ ] Milestone 1: Basic platform (auth, RBAC, profiles, internship CRUD) - in progress
 - [ ] Milestone 2: Recruitment (apply, screening, test, interview, selection)
 - [ ] Milestone 3: Internship (offer, onboarding, mentor, tasks, evaluation)
 - [ ] Milestone 4: Advanced (video, chat, notifications, coding judge, skill gap, analytics, certificates)
 - [ ] Milestone 5: Production (security, testing, Docker, deployment)
 
-## Sprint 1: Foundation
-- [x] Project folder + Git initialized
-- [x] React + Vite frontend created (Tailwind, Axios, Redux Toolkit, React Router installed)
-- [x] Spring Boot backend created (Spring Boot 4.1.1, Java 21, Maven)
-- [x] PostgreSQL running in Docker
-- [x] Backend connected to database
-- [x] `/api/health` endpoint working (checks the database too)
-- [x] Frontend calls backend successfully
-- [x] Push project to GitHub
-- [x] Flyway migrations set up
-- [x] User + Role entities
-- [x] Registration, Login, JWT (backend)
-- [x] Role-protected API endpoints (RBAC): /api/student, /api/company, /api/mentor, /api/admin
-- [x] Login/Register pages and role-based dashboards (frontend)
+## 3. Done
+**Sprint 1: Foundation**
+- [x] Git repository, pushed to GitHub (branch `main`)
+- [x] React + Vite frontend (Tailwind, Axios, Redux Toolkit, React Router)
+- [x] Spring Boot 4.1.1 backend (Java 21, Maven)
+- [x] PostgreSQL 16 in Docker, backend connected
+- [x] `GET /api/health` (also checks the database)
 
-## Next step
-1. Create the GitHub repository and push this project.
-2. Then: add Flyway and create the User and Role tables.
-3. Build the login and register pages and role-based dashboards in React.
-4. Student and company profiles, then internship posting (Milestone 1).
+**Phase 2: Database and authentication**
+- [x] Flyway migrations (V1: roles and users)
+- [x] Register, login, JWT (BCrypt password hashing)
+- [x] Role-protected API routes (STUDENT, COMPANY, MENTOR, ADMIN)
+- [x] Login and Register pages, protected routes, one dashboard per role
 
-## How to run the project (every time)
+## 4. In progress
+- [ ] Student profile (branch `feature/student-profile`): V2 migration, `GET/PUT /api/student/profile`, page `/student/profile`
+  - Tick this and merge the pull request after all tests pass.
+
+## 5. Up next (in order)
+1. Merge the student profile pull request.
+2. Company profile (V3 migration, `/api/company/profile`, page `/company/profile`).
+3. Internship posting by companies (create, edit, close) and browsing by students.
+4. Resume upload (needs file storage).
+5. Mentor profile (optional for now).
+6. Applications, then screening, tests and interviews (Milestone 2).
+
+## 6. What exists right now
+
+**Database tables**
+
+| Migration | Tables |
+|---|---|
+| V1 | `roles` (STUDENT, COMPANY, MENTOR, ADMIN), `users` |
+| V2 | `student_profiles` (in progress) |
+| V3 | reserved for `company_profiles` |
+
+**API endpoints**
+
+| Method | URL | Who can call it |
+|---|---|---|
+| GET | `/api/health` | anyone |
+| POST | `/api/auth/register` | anyone (STUDENT, COMPANY, MENTOR only) |
+| POST | `/api/auth/login` | anyone |
+| GET | `/api/auth/me` | any logged-in user |
+| GET, PUT | `/api/student/profile` | STUDENT (in progress) |
+| GET | `/api/student/ping`, `/api/company/ping`, `/api/mentor/ping`, `/api/admin/ping` | the matching role (test endpoints) |
+
+**Frontend routes**
+
+| Route | Page | Access |
+|---|---|---|
+| `/` | Home | anyone |
+| `/login`, `/register` | auth pages | anyone |
+| `/student/dashboard`, `/company/dashboard`, `/mentor/dashboard`, `/admin/dashboard` | dashboards | the matching role |
+| `/student/profile` | student profile form | STUDENT (in progress) |
+
+## 7. How to run the project (every time)
 1. Open **Docker Desktop** and wait for "Engine running".
-2. Database: `docker compose -f docker/docker-compose.yml up -d` (from the project root).
-3. Backend: `cd backend`, then `.\mvnw.cmd spring-boot:run` (runs on port 8081).
-4. Frontend: `cd frontend`, `npm install` (first time only), then `npm run dev` (runs on port 5173).
-5. Open http://localhost:5173. You should see "Backend: UP | Database: UP".
+2. Database (project root): `docker compose -f docker/docker-compose.yml up -d`
+3. Backend: `cd backend`, then `.\mvnw.cmd spring-boot:run`
+   - After many Java changes or branch switches use `.\mvnw.cmd clean spring-boot:run`.
+4. Frontend: `cd frontend`, `npm install` (first time only), then `npm run dev`
+5. Open http://localhost:5173. The home page should show "Backend: UP | Database: UP".
 
-## Ports
+## 8. First-time setup for a new teammate
+1. Install Git, Node.js (LTS), JDK 21 or newer, Docker Desktop and VS Code.
+2. Set the Git identity: `git config --global user.name "Name"` and `git config --global user.email "email"`.
+3. Clone: `git clone https://github.com/Anandgarg695/InternFlow.git`
+4. Create the JWT secret file (required, the backend will not start without it):
+   - Copy `backend/src/main/resources/application-local.properties.example` to `application-local.properties` in the same folder.
+   - Replace the placeholder after `app.jwt.secret=` with a random string. Generate one in PowerShell:
+```
+     $bytes = New-Object byte[] 48
+     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+     [Convert]::ToBase64String($bytes)
+```
+   - This file is git-ignored. Never commit it.
+5. Follow section 7 to run everything.
+
+## 9. Ports and local settings
 - Frontend: 5173
-- Backend: 8081 (8080 is used by a Windows service on Anand's machine)
-- PostgreSQL: 5433 on the host (maps to 5432 inside Docker, to avoid clashing with a locally installed PostgreSQL)
+- Backend: 8081 (port 8080 is used by a Windows service on Anand's machine)
+- PostgreSQL: 5433 on your computer (maps to 5432 inside Docker, to avoid clashing with a locally installed PostgreSQL)
+- Database name and user: `internflow`. Local password: `internflow_dev` (development only, never use in production).
 
-## Notes for teammate
-- Backend runs on port 8081 (port 8080 is taken by a Windows service on My machine). Frontend is on 5173.
-- Database name/user: `internflow`. Local dev password: `internflow_dev` (development only, never use in production).
-- The backend forces the UTC timezone in `BackendApplication.java`, because the Indian system timezone name "Asia/Calcutta" is rejected by PostgreSQL 16.
-- Hibernate is set to `ddl-auto=validate`: tables are never created automatically. We will create them with Flyway migrations.
-- Always run git commands from the project root (`InternFlow`), not from inside `frontend` or `backend`.
-- Add updates about the project below this line.
-- Repository: https://github.com/Anandgarg695/InternFlow (public). Never commit secrets; use environment variables.
-- Daily routine: git pull before starting, git add . / git commit / git pull / git push when done.
-- Database changes only through Flyway files in backend/src/main/resources/db/migration (V1__, V2__, ...). Never edit a migration that has been pushed; add a new one instead.
-- JWT secret setup (required before the backend starts): copy backend/src/main/resources/application-local.properties.example to application-local.properties in the same folder and replace the value with a random string. Generate one in PowerShell:
-$bytes = New-Object byte[] 48
-[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-[Convert]::ToBase64String($bytes)
-That file is git-ignored. NEVER commit a real secret (the repo is public). In production use the JWT_SECRET environment variable.
-- Public registration allows STUDENT, COMPANY, MENTOR only. Admin accounts are never self-registered.
-- Frontend auth: token + user stored in localStorage (key internflow_auth), Redux slice in src/store, protected routes in src/components/ProtectedRoute.jsx. Frontend route guards are only for UX; the backend enforces access.
+## 10. Team workflow
+1. Never commit directly to `main`.
+2. Start a feature: `git checkout main`, `git pull`, `git checkout -b feature/name`.
+3. Commit small and often. Push the branch: `git push -u origin feature/name`.
+4. Open a Pull Request on GitHub, ask the other person to look, merge, delete the branch.
+5. Sync: `git checkout main` and `git pull`.
+6. Run git commands from the project root (`InternFlow`), not from inside `frontend` or `backend`.
+7. Split work so you are not editing the same files at the same time (for example one person on the company profile, the other on internships).
+
+## 11. Rules for this project
+- **Secrets:** the repository is public. Never commit real secrets. Use `application-local.properties` (ignored) locally and environment variables (`JWT_SECRET`, `DB_PASSWORD`) in production.
+- **Database changes:** only through Flyway files in `backend/src/main/resources/db/migration` (`V1__`, `V2__`, ...). Never edit a migration that has been pushed; add a new one. Migration numbers must be unique: tell each other which number you are taking before creating the file.
+- **Hibernate** is set to `ddl-auto=validate`, so it never creates or changes tables by itself.
+- **Security:** the backend enforces access. Frontend route guards are only for user experience. The user id always comes from the token, never from the request.
+- **Public registration** allows STUDENT, COMPANY and MENTOR only. Admin accounts are never self-registered.
+- **Time zone:** the backend forces UTC in `BackendApplication.java`, because the Indian system name "Asia/Calcutta" is rejected by PostgreSQL 16.
+
+## 12. Known issues and fixes
+- **"Port already in use" on 8080:** that is why the backend uses 8081.
+- **"password authentication failed" for the database:** another PostgreSQL on Windows owns port 5432. Our container uses 5433.
+- **"Invalid method Code length 0" or other strange class errors:** stale compiled files. Stop the backend, then run `.\mvnw.cmd clean spring-boot:run`.
+- **"No migrations found":** the SQL file must be in `backend/src/main/resources/db/migration` and named like `V2__description.sql` (capital V, two underscores).
+- **"JWT secret is missing or too short":** create `application-local.properties` (see section 8).
+- **Backend cannot reach the database:** Docker Desktop must be running and `internflow-db` must be up (`docker ps`).
