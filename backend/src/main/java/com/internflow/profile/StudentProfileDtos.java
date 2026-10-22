@@ -51,8 +51,7 @@ public final class StudentProfileDtos {
                 return new StudentProfileResponse(user.getFullName(), user.getEmail(),
                         null, null, null, null, null, null, null, null, null, null, false);
             }
-            boolean complete = hasText(p.getUniversity()) && hasText(p.getDegree())
-                    && p.getGraduationYear() != null && hasText(p.getSkills());
+                        boolean complete = p.isComplete();
             return new StudentProfileResponse(user.getFullName(), user.getEmail(),
                     p.getPhone(), p.getUniversity(), p.getDegree(), p.getBranch(),
                     p.getGraduationYear(), p.getCgpa(), p.getSkills(), p.getBio(),
