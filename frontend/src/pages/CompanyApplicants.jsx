@@ -7,14 +7,20 @@ export default function CompanyApplicants() {
   const { id } = useParams()
   const [title, setTitle] = useState('')
   const [applicants, setApplicants] = useState([])
+  const [testInfo, setTestInfo] = useState({ testExists: false, results: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    Promise.all([api.get(`/company/internships/${id}`), api.get(`/company/internships/${id}/applications`)])
-      .then(([internship, list]) => {
+    Promise.all([
+      api.get(`/company/internships/${id}`),
+      api.get(`/company/internships/${id}/applications`),
+      api.get(`/company/internships/${id}/test/results`),
+    ])
+      .then(([internship, list, results]) => {
         setTitle(internship.data.title)
         setApplicants(list.data)
+        setTestInfo(results.data)
       })
       .catch(() => setError('Could not load the applicants for this internship'))
       .finally(() => setLoading(false))
@@ -28,6 +34,17 @@ export default function CompanyApplicants() {
     } catch (err) {
       setError(err.response?.data?.error || 'Could not update the application')
     }
+  }
+
+  const resultByApplication = new Map(testInfo.results.map((r) => [r.applicationId, r]))
+
+  const testLine = (applicant) => {
+    if (!testInfo.testExists) return null
+    const r = resultByApplication.get(applicant.id)
+    if (!r) return applicant.status === 'SHORTLISTED' ? 'Screening test: not started' : null
+    if (r.state === 'SUBMITTED') return `Screening test: ${r.score} / ${r.total}`
+    if (r.state === 'EXPIRED') return 'Screening test: time ran out, no score'
+    return 'Screening test: in progress'
   }
 
   if (loading) return <p className="text-slate-600">Loading applicants...</p>
@@ -52,6 +69,7 @@ export default function CompanyApplicants() {
           const linkedin = safeUrl(a.linkedinUrl)
           const github = safeUrl(a.githubUrl)
           const withdrawn = a.status === 'WITHDRAWN'
+          const line = testLine(a)
           return (
             <div key={a.id} className="rounded-xl bg-white p-6 shadow">
               <div className="flex items-start justify-between gap-4">
@@ -95,6 +113,8 @@ export default function CompanyApplicants() {
                   <p className="mt-1 whitespace-pre-line text-slate-600">{a.coverNote}</p>
                 </div>
               )}
+
+              {line && <p className="mt-3 text-sm font-medium text-indigo-700">{line}</p>}
 
               <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
                 {linkedin && (
