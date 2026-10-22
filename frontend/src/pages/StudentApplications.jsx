@@ -67,6 +67,14 @@ export default function StudentApplications() {
               </div>
 
               {a.coverNote && <p className="mt-3 whitespace-pre-line text-sm text-slate-600">{a.coverNote}</p>}
+                            {a.status === 'SHORTLISTED' && (
+                <Link
+                  to={`/student/applications/${a.id}/test`}
+                  className="mr-2 mt-4 inline-block rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-500"
+                >
+                  Screening test
+                </Link>
+              )}
 
               {canWithdraw && (
                 <button

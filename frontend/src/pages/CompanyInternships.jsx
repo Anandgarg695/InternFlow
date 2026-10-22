@@ -95,11 +95,17 @@ export default function CompanyInternships() {
               >
                 Edit
               </Link>
-                            <Link
+              <Link
                 to={`/company/internships/${item.id}/applicants`}
                 className="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50"
               >
                 Applicants
+              </Link>
+                            <Link
+                to={`/company/internships/${item.id}/test`}
+                className="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50"
+              >
+                Screening test
               </Link>
               {item.status === 'DRAFT' && (
                 <>
