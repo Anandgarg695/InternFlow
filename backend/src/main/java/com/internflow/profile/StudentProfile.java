@@ -71,6 +71,14 @@ public class StudentProfile {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+        public boolean isComplete() {
+        return hasText(university) && hasText(degree) && graduationYear != null && hasText(skills);
+    }
+
+    private static boolean hasText(String s) {
+        return s != null && !s.isBlank();
+    }
+
     @PrePersist
     void onCreate() {
         createdAt = Instant.now();

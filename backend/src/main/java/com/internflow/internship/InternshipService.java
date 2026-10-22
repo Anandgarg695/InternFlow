@@ -149,6 +149,17 @@ public class InternshipService {
         return toResponse(internship, companyName(internship.getCompanyId()));
     }
 
+    @Transactional(readOnly = true)
+    public Internship requireAcceptingApplications(Long id) {
+        Internship internship = internshipRepository.findById(id)
+                .filter(i -> i.getStatus() == InternshipStatus.OPEN)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Internship not found"));
+        if (internship.getApplicationDeadline().isBefore(today())) {
+            throw new ApiException(HttpStatus.CONFLICT, "The application deadline has passed");
+        }
+        return internship;
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private Internship findOwn(Long companyId, Long id) {

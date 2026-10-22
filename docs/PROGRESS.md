@@ -1,6 +1,6 @@
 # InternFlow Progress
 
-**Last updated:** 2026-10-21
+**Last updated:** 2026-10-22
 **Repository:** https://github.com/Anandgarg695/InternFlow (public)
 **How to run, setup, rules and fixes:** see [SETUP.md](SETUP.md)
 
@@ -11,9 +11,10 @@
 - [x] Login and register pages, one dashboard per role
 - [x] Student profile
 - [x] Company profile
+- [x] Internships: companies create, publish and close postings; students browse and search (branch `feature/internships`)
 
 ## Doing now
-- [ ] Internships: companies create, publish and close postings; students browse and search (branch `feature/internships`)
+- [ ] Applications: students apply and track status; companies shortlist or reject (branch `feature/applications`)
 
 ## Next (in this order)
 1. Applications: students apply, companies shortlist or reject

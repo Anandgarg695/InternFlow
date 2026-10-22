@@ -13,6 +13,7 @@ export default function StudentDashboard() {
       <div className="flex flex-wrap gap-3">
         <Link to="/student/profile" className={linkClass}>Edit my profile</Link>
         <Link to="/student/internships" className={linkClass}>Browse internships</Link>
+        <Link to="/student/applications" className={linkClass}>My applications</Link>
       </div>
     </DashboardShell>
   )
