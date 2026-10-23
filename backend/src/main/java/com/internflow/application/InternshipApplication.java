@@ -36,6 +36,9 @@ public class InternshipApplication {
     @Column(name = "cover_note", length = 2000)
     private String coverNote;
 
+    @Column(name = "current_round", nullable = false)
+    private int currentRound;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ApplicationStatus status;

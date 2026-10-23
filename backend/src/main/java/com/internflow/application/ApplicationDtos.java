@@ -31,7 +31,8 @@ public final class ApplicationDtos {
             String companyName,
             ApplicationStatus status,
             String coverNote,
-            Instant appliedAt) {
+            Instant appliedAt,
+            int currentRound) {
     }
 
     public record ApplicantResponse(
@@ -50,6 +51,7 @@ public final class ApplicationDtos {
             String skills,
             String bio,
             String linkedinUrl,
-            String githubUrl) {
+            String githubUrl,
+            int currentRound) {
     }
 }

@@ -18,9 +18,11 @@ import com.internflow.application.InternshipApplication;
 import com.internflow.application.InternshipApplicationRepository;
 import com.internflow.common.ApiException;
 import com.internflow.internship.InternshipRepository;
+import com.internflow.screening.ScreeningDtos.AdvanceResponse;
 import com.internflow.screening.ScreeningDtos.QuestionRequest;
 import com.internflow.screening.ScreeningDtos.QuestionResponse;
 import com.internflow.screening.ScreeningDtos.ResultResponse;
+import com.internflow.screening.ScreeningDtos.RoundSummary;
 import com.internflow.screening.ScreeningDtos.StartResponse;
 import com.internflow.screening.ScreeningDtos.StudentQuestion;
 import com.internflow.screening.ScreeningDtos.SubmitRequest;
@@ -37,6 +39,7 @@ public class ScreeningTestService {
 
     // A submission may arrive a little after the deadline because of network delay
     private static final long GRACE_SECONDS = 15;
+    private static final int MAX_ROUNDS = 10;
 
     private final ScreeningTestRepository testRepository;
     private final TestQuestionRepository questionRepository;
@@ -62,25 +65,42 @@ public class ScreeningTestService {
     // ---------------------------------------------------------------- company side
 
     @Transactional(readOnly = true)
-    public TestResponse getForCompany(Long companyId, Long internshipId) {
+    public List<RoundSummary> listRounds(Long companyId, Long internshipId) {
         requireOwnInternship(companyId, internshipId);
-        ScreeningTest test = testRepository.findByInternshipId(internshipId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "No screening test for this internship"));
+        return testRepository.findByInternshipIdOrderByRoundNumberAsc(internshipId).stream()
+                .map(t -> new RoundSummary(t.getRoundNumber(), t.getTitle(), t.getDurationMinutes(),
+                        (int) questionRepository.countByTestId(t.getId()),
+                        attemptRepository.existsByTestId(t.getId())))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public TestResponse getForCompany(Long companyId, Long internshipId, int round) {
+        requireOwnInternship(companyId, internshipId);
+        ScreeningTest test = testRepository.findByInternshipIdAndRoundNumber(internshipId, round)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "There is no test for this round"));
         List<TestQuestion> questions = questionRepository.findByTestIdOrderBySortOrderAsc(test.getId());
         return toTestResponse(test, questions, attemptRepository.existsByTestId(test.getId()));
     }
 
     @Transactional
-    public TestResponse save(Long companyId, Long internshipId, TestRequest request) {
+    public TestResponse save(Long companyId, Long internshipId, int round, TestRequest request) {
         requireOwnInternship(companyId, internshipId);
+        if (round < 1 || round > MAX_ROUNDS) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Round must be between 1 and " + MAX_ROUNDS);
+        }
 
-        ScreeningTest test = testRepository.findByInternshipId(internshipId).orElse(null);
+        ScreeningTest test = testRepository.findByInternshipIdAndRoundNumber(internshipId, round).orElse(null);
         if (test == null) {
+            if (round > 1 && testRepository.findByInternshipIdAndRoundNumber(internshipId, round - 1).isEmpty()) {
+                throw new ApiException(HttpStatus.CONFLICT, "Create round " + (round - 1) + " first");
+            }
             test = new ScreeningTest();
             test.setInternshipId(internshipId);
+            test.setRoundNumber(round);
         } else if (attemptRepository.existsByTestId(test.getId())) {
             throw new ApiException(HttpStatus.CONFLICT,
-                    "Students have already started this test, so it can no longer be changed");
+                    "Students have already started this round, so it can no longer be changed");
         }
         test.setTitle(request.title().trim());
         test.setDurationMinutes(request.durationMinutes());
@@ -104,13 +124,16 @@ public class ScreeningTestService {
     }
 
     @Transactional
-    public void delete(Long companyId, Long internshipId) {
+    public void delete(Long companyId, Long internshipId, int round) {
         requireOwnInternship(companyId, internshipId);
-        ScreeningTest test = testRepository.findByInternshipId(internshipId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "No screening test for this internship"));
+        ScreeningTest test = testRepository.findByInternshipIdAndRoundNumber(internshipId, round)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "There is no test for this round"));
+        if (testRepository.findByInternshipIdAndRoundNumber(internshipId, round + 1).isPresent()) {
+            throw new ApiException(HttpStatus.CONFLICT, "Delete the later rounds first");
+        }
         if (attemptRepository.existsByTestId(test.getId())) {
             throw new ApiException(HttpStatus.CONFLICT,
-                    "Students have already started this test, so it can no longer be deleted");
+                    "Students have already started this round, so it can no longer be deleted");
         }
         testRepository.delete(test);
     }
@@ -118,14 +141,18 @@ public class ScreeningTestService {
     @Transactional(readOnly = true)
     public TestResultsResponse results(Long companyId, Long internshipId) {
         requireOwnInternship(companyId, internshipId);
-        Optional<ScreeningTest> test = testRepository.findByInternshipId(internshipId);
-        if (test.isEmpty()) {
-            return new TestResultsResponse(false, List.of());
+        List<ScreeningTest> tests = testRepository.findByInternshipIdOrderByRoundNumberAsc(internshipId);
+        if (tests.isEmpty()) {
+            return new TestResultsResponse(false, 0, List.of());
         }
 
-        List<TestAttempt> attempts = attemptRepository.findByTestId(test.get().getId());
+        Map<Long, Integer> roundByTest = tests.stream()
+                .collect(Collectors.toMap(ScreeningTest::getId, ScreeningTest::getRoundNumber));
+        List<TestAttempt> attempts = attemptRepository.findByTestIdIn(roundByTest.keySet());
+
         Map<Long, InternshipApplication> applications = applicationRepository
-                .findAllById(attempts.stream().map(TestAttempt::getApplicationId).toList()).stream()
+                .findAllById(attempts.stream().map(TestAttempt::getApplicationId).collect(Collectors.toSet()))
+                .stream()
                 .collect(Collectors.toMap(InternshipApplication::getId, Function.identity()));
         Map<Long, User> users = userRepository
                 .findAllById(applications.values().stream().map(InternshipApplication::getStudentId)
@@ -139,7 +166,7 @@ public class ScreeningTestService {
             User user = application == null ? null : users.get(application.getStudentId());
             AttemptState state = stateOf(a, now);
             boolean submitted = state == AttemptState.SUBMITTED;
-            return new ResultResponse(a.getApplicationId(),
+            return new ResultResponse(a.getApplicationId(), roundByTest.get(a.getTestId()),
                     user == null ? null : user.getFullName(),
                     user == null ? null : user.getEmail(),
                     state,
@@ -147,7 +174,42 @@ public class ScreeningTestService {
                     submitted ? a.getTotal() : null,
                     a.getSubmittedAt());
         }).toList();
-        return new TestResultsResponse(true, results);
+        return new TestResultsResponse(true, tests.size(), results);
+    }
+
+    @Transactional
+    public AdvanceResponse advance(Long companyId, Long applicationId) {
+        InternshipApplication application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Application not found"));
+        internshipRepository.findByIdAndCompanyId(application.getInternshipId(), companyId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Application not found"));
+
+        if (application.getStatus() != ApplicationStatus.SHORTLISTED) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "Only shortlisted applicants can be moved to the next round");
+        }
+
+        int current = roundOf(application);
+        if (current >= MAX_ROUNDS) {
+            throw new ApiException(HttpStatus.CONFLICT, "This applicant is already in the last possible round");
+        }
+
+        // If the current round has a test, the applicant must have finished it (submitted or timed out)
+        Optional<ScreeningTest> test = testRepository
+                .findByInternshipIdAndRoundNumber(application.getInternshipId(), current);
+        if (test.isPresent()) {
+            TestAttempt attempt = attemptRepository
+                    .findByApplicationIdAndTestId(applicationId, test.get().getId()).orElse(null);
+            AttemptState state = attempt == null ? AttemptState.NOT_STARTED : stateOf(attempt, Instant.now());
+            if (state == AttemptState.NOT_STARTED || state == AttemptState.IN_PROGRESS) {
+                throw new ApiException(HttpStatus.CONFLICT,
+                        "The applicant has not finished round " + current + " yet");
+            }
+        }
+
+        application.setCurrentRound(current + 1);
+        applicationRepository.save(application);
+        return new AdvanceResponse(application.getId(), application.getCurrentRound());
     }
 
     // ---------------------------------------------------------------- student side
@@ -155,29 +217,36 @@ public class ScreeningTestService {
     @Transactional(readOnly = true)
     public TestInfoResponse info(Long studentId, Long applicationId) {
         InternshipApplication application = ownApplication(studentId, applicationId);
-        ScreeningTest test = testRepository.findByInternshipId(application.getInternshipId()).orElse(null);
+        int round = roundOf(application);
+        List<ScreeningTest> tests = testRepository
+                .findByInternshipIdOrderByRoundNumberAsc(application.getInternshipId());
+        int totalRounds = tests.size();
+
+        ScreeningTest test = tests.stream().filter(t -> t.getRoundNumber() == round).findFirst().orElse(null);
         if (test == null) {
-            return new TestInfoResponse(AttemptState.NO_TEST, null, null, null, null, null);
+            return new TestInfoResponse(AttemptState.NO_TEST, round, totalRounds, null, null, null, null, null);
         }
 
         int questionCount = (int) questionRepository.countByTestId(test.getId());
-        TestAttempt attempt = attemptRepository.findByApplicationId(applicationId).orElse(null);
+        TestAttempt attempt = attemptRepository.findByApplicationIdAndTestId(applicationId, test.getId())
+                .orElse(null);
         AttemptState state = attempt == null ? AttemptState.NOT_STARTED : stateOf(attempt, Instant.now());
         boolean submitted = state == AttemptState.SUBMITTED;
-        return new TestInfoResponse(state, test.getTitle(), test.getDurationMinutes(), questionCount,
-                submitted ? attempt.getScore() : null, submitted ? attempt.getTotal() : null);
+        return new TestInfoResponse(state, round, totalRounds, test.getTitle(), test.getDurationMinutes(),
+                questionCount, submitted ? attempt.getScore() : null, submitted ? attempt.getTotal() : null);
     }
 
     @Transactional
     public StartResponse start(Long studentId, Long applicationId) {
         InternshipApplication application = ownApplication(studentId, applicationId);
         requireShortlisted(application);
-        ScreeningTest test = testRepository.findByInternshipId(application.getInternshipId())
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "No screening test for this internship"));
+        ScreeningTest test = currentTest(application)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "There is no test for your current round"));
         List<TestQuestion> questions = questionRepository.findByTestIdOrderBySortOrderAsc(test.getId());
 
         Instant now = Instant.now();
-        TestAttempt attempt = attemptRepository.findByApplicationId(applicationId).orElse(null);
+        TestAttempt attempt = attemptRepository.findByApplicationIdAndTestId(applicationId, test.getId())
+                .orElse(null);
         if (attempt == null) {
             attempt = new TestAttempt();
             attempt.setTestId(test.getId());
@@ -205,7 +274,9 @@ public class ScreeningTestService {
     public SubmitResponse submit(Long studentId, Long applicationId, SubmitRequest request) {
         InternshipApplication application = ownApplication(studentId, applicationId);
         requireShortlisted(application);
-        TestAttempt attempt = attemptRepository.findByApplicationId(applicationId)
+        ScreeningTest test = currentTest(application)
+                .orElseThrow(() -> new ApiException(HttpStatus.CONFLICT, "There is no test for your current round"));
+        TestAttempt attempt = attemptRepository.findByApplicationIdAndTestId(applicationId, test.getId())
                 .orElseThrow(() -> new ApiException(HttpStatus.CONFLICT, "Start the test before submitting it"));
 
         Instant now = Instant.now();
@@ -217,7 +288,7 @@ public class ScreeningTestService {
             throw new ApiException(HttpStatus.CONFLICT, "The time for this test has run out");
         }
 
-        List<TestQuestion> questions = questionRepository.findByTestIdOrderBySortOrderAsc(attempt.getTestId());
+        List<TestQuestion> questions = questionRepository.findByTestIdOrderBySortOrderAsc(test.getId());
         List<Integer> answers = request.answers();
         if (answers.size() > questions.size()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Too many answers for this test");
@@ -259,8 +330,16 @@ public class ScreeningTestService {
 
     private void requireShortlisted(InternshipApplication application) {
         if (application.getStatus() != ApplicationStatus.SHORTLISTED) {
-            throw new ApiException(HttpStatus.CONFLICT, "Only shortlisted applicants can take the screening test");
+            throw new ApiException(HttpStatus.CONFLICT, "Only shortlisted applicants can take the tests");
         }
+    }
+
+    private int roundOf(InternshipApplication application) {
+        return Math.max(application.getCurrentRound(), 1);
+    }
+
+    private Optional<ScreeningTest> currentTest(InternshipApplication application) {
+        return testRepository.findByInternshipIdAndRoundNumber(application.getInternshipId(), roundOf(application));
     }
 
     private AttemptState stateOf(TestAttempt attempt, Instant now) {
@@ -277,6 +356,7 @@ public class ScreeningTestService {
         List<QuestionResponse> items = questions.stream()
                 .map(q -> new QuestionResponse(q.getQuestionText(), q.options(), q.getCorrectOption()))
                 .toList();
-        return new TestResponse(test.getId(), test.getTitle(), test.getDurationMinutes(), locked, items);
+        return new TestResponse(test.getId(), test.getRoundNumber(), test.getTitle(), test.getDurationMinutes(),
+                locked, items);
     }
 }

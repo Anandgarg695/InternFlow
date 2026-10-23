@@ -34,21 +34,28 @@ public final class ScreeningDtos {
     public record QuestionResponse(String text, List<String> options, int correctOption) {
     }
 
-    public record TestResponse(Long id, String title, int durationMinutes, boolean locked,
+    public record TestResponse(Long id, int roundNumber, String title, int durationMinutes, boolean locked,
             List<QuestionResponse> questions) {
     }
 
-    public record ResultResponse(Long applicationId, String studentName, String studentEmail,
+    public record RoundSummary(int roundNumber, String title, int durationMinutes, int questionCount,
+            boolean locked) {
+    }
+
+    public record ResultResponse(Long applicationId, int roundNumber, String studentName, String studentEmail,
             AttemptState state, Integer score, Integer total, Instant submittedAt) {
     }
 
-    public record TestResultsResponse(boolean testExists, List<ResultResponse> results) {
+    public record TestResultsResponse(boolean testExists, int totalRounds, List<ResultResponse> results) {
+    }
+
+    public record AdvanceResponse(Long applicationId, int currentRound) {
     }
 
     // ---------------------------------------------------------------- student
 
-    public record TestInfoResponse(AttemptState state, String title, Integer durationMinutes,
-            Integer questionCount, Integer score, Integer total) {
+    public record TestInfoResponse(AttemptState state, int roundNumber, int totalRounds, String title,
+            Integer durationMinutes, Integer questionCount, Integer score, Integer total) {
     }
 
     // Deliberately has no correct answer

@@ -26,7 +26,7 @@ public class TestAttempt {
     @Column(name = "test_id", nullable = false, updatable = false)
     private Long testId;
 
-    @Column(name = "application_id", nullable = false, updatable = false, unique = true)
+    @Column(name = "application_id", nullable = false, updatable = false)
     private Long applicationId;
 
     @Column(name = "started_at", nullable = false, updatable = false)

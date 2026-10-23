@@ -116,6 +116,9 @@ public class ApplicationService {
         ApplicationStatus target = ApplicationStatus.valueOf(decision.name());
         if (application.getStatus() != target) {
             application.setStatus(target);
+            if (target == ApplicationStatus.SHORTLISTED && application.getCurrentRound() == 0) {
+                application.setCurrentRound(1);
+            }
             applicationRepository.save(application);
         }
         return toApplicantResponses(List.of(application)).get(0);
@@ -145,7 +148,7 @@ public class ApplicationService {
             return new StudentApplicationResponse(a.getId(), a.getInternshipId(),
                     internship == null ? null : internship.getTitle(),
                     internship == null ? null : companyNames.get(internship.getCompanyId()),
-                    a.getStatus(), a.getCoverNote(), a.getCreatedAt());
+                    a.getStatus(), a.getCoverNote(), a.getCreatedAt(), a.getCurrentRound());
         }).toList();
     }
 
@@ -177,7 +180,8 @@ public class ApplicationService {
                     p == null ? null : p.getSkills(),
                     p == null ? null : p.getBio(),
                     p == null ? null : p.getLinkedinUrl(),
-                    p == null ? null : p.getGithubUrl());
+                    p == null ? null : p.getGithubUrl(),
+                    a.getCurrentRound());
         }).toList();
     }
 

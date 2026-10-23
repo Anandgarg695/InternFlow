@@ -18,6 +18,7 @@ import StudentApplications from './pages/StudentApplications'
 import CompanyApplicants from './pages/CompanyApplicants'
 import CompanyTest from './pages/CompanyTest'
 import StudentTest from './pages/StudentTest'
+import CompanyRounds from './pages/CompanyRounds'
 
 function App() {
   return (
@@ -42,7 +43,8 @@ function App() {
           <Route path="/company/internships/new" element={<InternshipForm />} />
           <Route path="/company/internships/:id/edit" element={<InternshipForm />} />
           <Route path="/company/internships/:id/applicants" element={<CompanyApplicants />} />
-          <Route path="/company/internships/:id/test" element={<CompanyTest />} />
+          <Route path="/company/internships/:id/rounds" element={<CompanyRounds />} />
+          <Route path="/company/internships/:id/rounds/:round" element={<CompanyTest />} />
         </Route>
         <Route element={<ProtectedRoute role="MENTOR" />}>
           <Route path="/mentor/dashboard" element={<MentorDashboard />} />
