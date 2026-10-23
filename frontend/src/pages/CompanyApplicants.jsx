@@ -7,7 +7,7 @@ export default function CompanyApplicants() {
   const { id } = useParams()
   const [title, setTitle] = useState('')
   const [applicants, setApplicants] = useState([])
-  const [testInfo, setTestInfo] = useState({ testExists: false, results: [] })
+  const [testInfo, setTestInfo] = useState({ testExists: false, totalRounds: 0, results: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -36,15 +36,34 @@ export default function CompanyApplicants() {
     }
   }
 
-  const resultByApplication = new Map(testInfo.results.map((r) => [r.applicationId, r]))
+  const advance = async (applicationId) => {
+    setError('')
+    try {
+      const res = await api.post(`/company/applications/${applicationId}/advance`)
+      setApplicants((current) =>
+        current.map((a) => (a.id === applicationId ? { ...a, currentRound: res.data.currentRound } : a)),
+      )
+    } catch (err) {
+      setError(err.response?.data?.error || 'Could not move the applicant to the next round')
+    }
+  }
 
-  const testLine = (applicant) => {
-    if (!testInfo.testExists) return null
-    const r = resultByApplication.get(applicant.id)
-    if (!r) return applicant.status === 'SHORTLISTED' ? 'Screening test: not started' : null
-    if (r.state === 'SUBMITTED') return `Screening test: ${r.score} / ${r.total}`
-    if (r.state === 'EXPIRED') return 'Screening test: time ran out, no score'
-    return 'Screening test: in progress'
+  const roundLines = (applicant) => {
+    if (!testInfo.testExists) return []
+    const results = testInfo.results
+      .filter((r) => r.applicationId === applicant.id)
+      .sort((x, y) => x.roundNumber - y.roundNumber)
+    const lines = results.map((r) => {
+      if (r.state === 'SUBMITTED') return `Round ${r.roundNumber}: ${r.score} / ${r.total}`
+      if (r.state === 'EXPIRED') return `Round ${r.roundNumber}: time ran out, no score`
+      return `Round ${r.roundNumber}: in progress`
+    })
+    const current = applicant.currentRound
+    const hasCurrent = results.some((r) => r.roundNumber === current)
+    if (applicant.status === 'SHORTLISTED' && current >= 1 && current <= testInfo.totalRounds && !hasCurrent) {
+      lines.push(`Round ${current}: not started`)
+    }
+    return lines
   }
 
   if (loading) return <p className="text-slate-600">Loading applicants...</p>
@@ -69,7 +88,8 @@ export default function CompanyApplicants() {
           const linkedin = safeUrl(a.linkedinUrl)
           const github = safeUrl(a.githubUrl)
           const withdrawn = a.status === 'WITHDRAWN'
-          const line = testLine(a)
+          const lines = roundLines(a)
+          const shortlisted = a.status === 'SHORTLISTED'
           return (
             <div key={a.id} className="rounded-xl bg-white p-6 shadow">
               <div className="flex items-start justify-between gap-4">
@@ -114,7 +134,21 @@ export default function CompanyApplicants() {
                 </div>
               )}
 
-              {line && <p className="mt-3 text-sm font-medium text-indigo-700">{line}</p>}
+              {shortlisted && (
+                <div className="mt-3 text-sm font-medium text-indigo-700">
+                  <p>Current round: {a.currentRound}</p>
+                  {lines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              )}
+              {!shortlisted && lines.length > 0 && (
+                <div className="mt-3 text-sm text-slate-600">
+                  {lines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
                 {linkedin && (
@@ -132,6 +166,14 @@ export default function CompanyApplicants() {
                   <span className="text-slate-500">The student withdrew this application.</span>
                 ) : (
                   <>
+                    {shortlisted && testInfo.testExists && (
+                      <button
+                        onClick={() => advance(a.id)}
+                        className="rounded-md bg-indigo-600 px-3 py-1.5 text-white hover:bg-indigo-500"
+                      >
+                        Move to round {a.currentRound + 1}
+                      </button>
+                    )}
                     {a.status !== 'SHORTLISTED' && (
                       <button
                         onClick={() => decide(a.id, 'SHORTLISTED')}

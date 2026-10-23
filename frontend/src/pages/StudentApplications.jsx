@@ -72,7 +72,7 @@ export default function StudentApplications() {
                   to={`/student/applications/${a.id}/test`}
                   className="mr-2 mt-4 inline-block rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-500"
                 >
-                  Screening test
+                      Round {Math.max(a.currentRound, 1)} test
                 </Link>
               )}
 

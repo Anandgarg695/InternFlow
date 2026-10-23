@@ -181,14 +181,15 @@ export default function StudentTest() {
   return (
     <div className="mx-auto max-w-xl rounded-xl bg-white p-8 shadow">
       {backLink}
-      <h1 className="mt-3 text-2xl font-bold text-indigo-600">Screening test</h1>
+        <h1 className="mt-3 text-2xl font-bold text-indigo-600">
+           {info ? `Round ${info.roundNumber} of your hiring process` : 'Test'}
+        </h1>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
       {info?.state === 'NO_TEST' && (
         <p className="mt-4 text-slate-700">
-          The company has not set a screening test for this internship. They will contact you if there is a
-          next step.
+          There is no test for this round yet. The company will contact you if there is a next step.
         </p>
       )}
 
@@ -219,7 +220,12 @@ export default function StudentTest() {
       )}
 
       {info?.state === 'SUBMITTED' && (
-        <p className="mt-4 text-lg">You scored {info.score} out of {info.total}.</p>
+          <div className="mt-4">
+             <p className="text-lg">You scored {info.score} out of {info.total}.</p>
+             <p className="mt-2 text-sm text-slate-600">
+               The company will let you know if you move to the next round.
+             </p>
+          </div>
       )}
 
       {info?.state === 'EXPIRED' && (

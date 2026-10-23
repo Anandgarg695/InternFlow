@@ -25,8 +25,11 @@ public class ScreeningTest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "internship_id", nullable = false, updatable = false, unique = true)
+    @Column(name = "internship_id", nullable = false, updatable = false)
     private Long internshipId;
+
+    @Column(name = "round_number", nullable = false)
+    private int roundNumber;
 
     @Column(nullable = false, length = 150)
     private String title;

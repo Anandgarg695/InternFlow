@@ -11,7 +11,7 @@ const inputClass =
   'mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none'
 
 export default function CompanyTest() {
-  const { id } = useParams()
+  const { id, round } = useParams()
   const [internshipTitle, setInternshipTitle] = useState('')
   const [title, setTitle] = useState('')
   const [duration, setDuration] = useState('30')
@@ -28,7 +28,7 @@ export default function CompanyTest() {
       .then((res) => setInternshipTitle(res.data.title))
       .catch(() => {})
 
-    api.get(`/company/internships/${id}/test`)
+    api.get(`/company/internships/${id}/rounds/${round}/test`)
       .then((res) => {
         setTitle(res.data.title)
         setDuration(String(res.data.durationMinutes))
@@ -46,7 +46,7 @@ export default function CompanyTest() {
         if (err.response?.status !== 404) setError('Could not load the test')
       })
       .finally(() => setLoading(false))
-  }, [id])
+  }, [id, round])
 
   const touch = () => setSaved(false)
 
@@ -80,7 +80,7 @@ export default function CompanyTest() {
     setSaved(false)
     setSaving(true)
     try {
-      const res = await api.put(`/company/internships/${id}/test`, {
+      const res = await api.put(`/company/internships/${id}/rounds/${round}/test`, {
         title: title.trim(),
         durationMinutes: duration === '' ? null : Number(duration),
         questions: questions.map((q) => ({
@@ -105,7 +105,7 @@ export default function CompanyTest() {
     if (!window.confirm('Delete this test? This cannot be undone.')) return
     setError('')
     try {
-      await api.delete(`/company/internships/${id}/test`)
+      await api.delete(`/company/internships/${id}/rounds/${round}/test`)
       setTitle('')
       setDuration('30')
       setQuestions([blankQuestion()])
@@ -120,10 +120,10 @@ export default function CompanyTest() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/company/internships" className="text-sm text-slate-600 hover:text-indigo-600">
-        ← Back to my internships
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold text-indigo-600">Screening test</h1>
+        <Link to={`/company/internships/${id}/rounds`} className="text-sm text-slate-600 hover:text-indigo-600">
+           ← Back to rounds
+        </Link>
+        <h1 className="mt-2 text-2xl font-bold text-indigo-600">Round {round} test</h1>
       {internshipTitle && <p className="text-slate-600">{internshipTitle}</p>}
       <p className="mt-1 text-sm text-slate-500">
         Only shortlisted students can take this test. Each student gets one attempt, and the timer starts
