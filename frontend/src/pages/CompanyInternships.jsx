@@ -107,6 +107,12 @@ export default function CompanyInternships() {
               >
                 Rounds & tests
               </Link>
+                            <Link
+                to={`/company/internships/${item.id}/interviews`}
+                className="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50"
+              >
+                Interviews
+              </Link>
               {item.status === 'DRAFT' && (
                 <>
                   <button
