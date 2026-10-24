@@ -14,6 +14,7 @@ export default function StudentDashboard() {
         <Link to="/student/profile" className={linkClass}>Edit my profile</Link>
         <Link to="/student/internships" className={linkClass}>Browse internships</Link>
         <Link to="/student/applications" className={linkClass}>My applications</Link>
+        <Link to="/student/interviews" className={linkClass}>My interviews</Link>
       </div>
     </DashboardShell>
   )
