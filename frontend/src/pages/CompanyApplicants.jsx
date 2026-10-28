@@ -88,6 +88,7 @@ export default function CompanyApplicants() {
           const linkedin = safeUrl(a.linkedinUrl)
           const github = safeUrl(a.githubUrl)
           const withdrawn = a.status === 'WITHDRAWN'
+          const hasOffer = a.status === 'OFFERED' || a.status === 'SELECTED'
           const lines = roundLines(a)
           const shortlisted = a.status === 'SHORTLISTED'
           return (
@@ -136,7 +137,11 @@ export default function CompanyApplicants() {
 
               {shortlisted && (
                 <div className="mt-3 text-sm font-medium text-indigo-700">
-                  <p>Current round: {a.currentRound}</p>
+                  <p>
+                    Current round: {a.currentRound}
+                    {testInfo.testExists ? ` of ${testInfo.totalRounds}` : ''}
+                    {testInfo.testExists && a.currentRound >= testInfo.totalRounds ? ' (last round)' : ''}
+                  </p>
                   {lines.map((line) => (
                     <p key={line}>{line}</p>
                   ))}
@@ -162,11 +167,15 @@ export default function CompanyApplicants() {
                   </a>
                 )}
                 <span className="flex-1" />
-                {withdrawn ? (
-                  <span className="text-slate-500">The student withdrew this application.</span>
+                {withdrawn || hasOffer ? (
+                      <span className="text-slate-500">
+                       {withdrawn
+                         ? 'The student withdrew this application.'
+                         : 'This applicant has an offer. Manage it on the Offers page.'}
+                     </span>
                 ) : (
                   <>
-                    {shortlisted && testInfo.testExists && (
+                    {shortlisted && testInfo.testExists && a.currentRound < testInfo.totalRounds && (
                       <button
                         onClick={() => advance(a.id)}
                         className="rounded-md bg-indigo-600 px-3 py-1.5 text-white hover:bg-indigo-500"

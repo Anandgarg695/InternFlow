@@ -75,6 +75,14 @@ export default function StudentApplications() {
                       Round {Math.max(a.currentRound, 1)} test
                 </Link>
               )}
+                {(a.status === 'OFFERED' || a.status === 'SELECTED') && (
+                <Link
+                  to="/student/offers"
+                  className="mr-2 mt-4 inline-block rounded-md bg-purple-600 px-3 py-1.5 text-sm text-white hover:bg-purple-500"
+                >
+                  View offer
+                </Link>
+              )}
 
               {canWithdraw && (
                 <button

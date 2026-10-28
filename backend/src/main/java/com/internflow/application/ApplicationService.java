@@ -110,8 +110,10 @@ public class ApplicationService {
         internshipRepository.findByIdAndCompanyId(application.getInternshipId(), companyId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Application not found"));
 
-        if (application.getStatus() == ApplicationStatus.WITHDRAWN) {
-            throw new ApiException(HttpStatus.CONFLICT, "The student withdrew this application");
+        if (application.getStatus() == ApplicationStatus.OFFERED
+                || application.getStatus() == ApplicationStatus.SELECTED) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "This applicant has an offer, so the status can no longer be changed here");
         }
         ApplicationStatus target = ApplicationStatus.valueOf(decision.name());
         if (application.getStatus() != target) {
