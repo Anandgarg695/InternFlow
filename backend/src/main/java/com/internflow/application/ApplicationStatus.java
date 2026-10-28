@@ -1,5 +1,5 @@
 package com.internflow.application;
 
 public enum ApplicationStatus {
-    APPLIED, SHORTLISTED, REJECTED, WITHDRAWN
+    APPLIED, SHORTLISTED, REJECTED, WITHDRAWN, OFFERED, SELECTED
 }

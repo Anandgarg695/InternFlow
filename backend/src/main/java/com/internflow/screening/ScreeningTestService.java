@@ -190,10 +190,15 @@ public class ScreeningTestService {
         }
 
         int current = roundOf(application);
-        if (current >= MAX_ROUNDS) {
-            throw new ApiException(HttpStatus.CONFLICT, "This applicant is already in the last possible round");
+        // Rounds are always created in order, so the number of tests is the last round number
+        int totalRounds = testRepository.findByInternshipIdOrderByRoundNumberAsc(application.getInternshipId()).size();
+        if (totalRounds == 0) {
+            throw new ApiException(HttpStatus.CONFLICT, "This internship has no test rounds yet");
         }
-
+        if (current >= totalRounds) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "This applicant is already in the last round. Create the next round first to move them further");
+        }
         // If the current round has a test, the applicant must have finished it (submitted or timed out)
         Optional<ScreeningTest> test = testRepository
                 .findByInternshipIdAndRoundNumber(application.getInternshipId(), current);
