@@ -45,6 +45,12 @@ export default function StudentPlacements() {
                   <p className="mt-2 text-sm text-slate-600">
                     {formatDate(p.startDate)} to {formatDate(p.endDate)}
                   </p>
+                  <Link
+                    to={`/student/placements/${p.id}/tasks`}
+                    className="mt-2 inline-block text-sm text-indigo-600 hover:underline"
+                  >
+                    My tasks
+                  </Link>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${phase.style}`}>{phase.label}</span>
               </div>

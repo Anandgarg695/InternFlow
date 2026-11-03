@@ -19,9 +19,10 @@
 - [x] Interviews: company schedules interviews for shortlisted students; students confirm or ask to reschedule (branch `feature/interviews`)
 - [x] Final selection and offers: company selects candidates, students accept or decline (branch `feature/offers`)
 - [x] Onboarding and mentor assignment (branch `feature/onboarding`)
+- [x] Tasks and mentor evaluation (branch `feature/tasks`)
 
 ## Doing now
-- [ ] Tasks and mentor evaluation (branch `feature/tasks`)
+- [ ] Final evaluation, internship completion and certificates (branch `feature/completion`)
 
 ## Next (in this order)
 1. Tasks, mentor feedback and evaluation.
@@ -38,3 +39,4 @@
 - Offers: application statuses now include OFFERED and SELECTED. Offers need a shortlisted applicant with no active interview, and are capped by the internship's openings (accepted plus pending). Accepting the last opening closes the internship automatically. Offers expire at the end of expires_on (Indian time); a once-a-minute job and every offer endpoint turn expired offers back into SHORTLISTED applications. Accepted offers cannot be withdrawn yet. Declining sets the application to WITHDRAWN.
 - Placements: created automatically when a student accepts an offer (start = offer start date, end = start + internship duration in weeks). Placement status is ACTIVE for now; the phase (starts soon, ongoing, ended) is worked out from the dates in Indian time.
 - Mentors: a company invites a mentor by email, and the mentor must accept (table mentor_links). Only accepted mentors can be assigned to interns. A mentor with active interns cannot be removed. Mentors see only an intern's name, email, internship and dates, never profile, scores or feedback. Known limitation: the invite endpoint reveals whether an email belongs to a mentor account (to harden later).
+- Tasks: only the intern's currently assigned mentor can create, edit, delete or review tasks (a reassigned mentor gets 404). Due dates must fall inside the internship dates. Interns can submit only while the internship is running (late submissions are allowed and marked late). Review is approve (rating 1-5) or request changes (comments required); a resubmission clears the previous rating and comments. Tasks can be edited or deleted only before any submission.
