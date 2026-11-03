@@ -31,6 +31,7 @@ import com.internflow.profile.CompanyProfile;
 import com.internflow.profile.CompanyProfileRepository;
 import com.internflow.user.User;
 import com.internflow.user.UserRepository;
+import com.internflow.placement.PlacementService;
 
 @Service
 public class OfferService {
@@ -48,19 +49,22 @@ public class OfferService {
     private final InterviewRepository interviewRepository;
     private final UserRepository userRepository;
     private final CompanyProfileRepository companyProfileRepository;
+    private final PlacementService placementService;
 
-    public OfferService(OfferRepository offerRepository,
+        public OfferService(OfferRepository offerRepository,
             InternshipApplicationRepository applicationRepository,
             InternshipRepository internshipRepository,
             InterviewRepository interviewRepository,
             UserRepository userRepository,
-            CompanyProfileRepository companyProfileRepository) {
+            CompanyProfileRepository companyProfileRepository,
+            PlacementService placementService) {
         this.offerRepository = offerRepository;
         this.applicationRepository = applicationRepository;
         this.internshipRepository = internshipRepository;
         this.interviewRepository = interviewRepository;
         this.userRepository = userRepository;
         this.companyProfileRepository = companyProfileRepository;
+        this.placementService = placementService;
     }
 
     // ---------------------------------------------------------------- company side
@@ -180,6 +184,7 @@ public class OfferService {
         offer.setRespondedAt(Instant.now());
         offerRepository.save(offer);
         setApplicationStatus(offer.getApplicationId(), ApplicationStatus.OFFERED, ApplicationStatus.SELECTED);
+        placementService.createFor(offer.getApplicationId(), internship, offer.getStudentId(), offer.getStartDate());
 
         // The last opening is filled: stop taking new applications
         if (accepted + 1 >= internship.getOpenings() && internship.getStatus() != InternshipStatus.CLOSED) {

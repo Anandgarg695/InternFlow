@@ -119,6 +119,12 @@ export default function CompanyInternships() {
               >
                 Offers
               </Link>
+                            <Link
+                to={`/company/internships/${item.id}/interns`}
+                className="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50"
+              >
+                Interns
+              </Link>
               {item.status === 'DRAFT' && (
                 <>
                   <button
