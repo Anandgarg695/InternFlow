@@ -33,6 +33,7 @@ import MentorEvaluation from './pages/MentorEvaluation'
 import CompanyInternProgress from './pages/CompanyInternProgress'
 import StudentCompletion from './pages/StudentCompletion'
 import VerifyCertificate from './pages/VerifyCertificate'
+import AdminUsers from './pages/AdminUsers'
 
 function App() {
   return (
@@ -81,6 +82,7 @@ function App() {
         </Route>
         <Route element={<ProtectedRoute role="ADMIN" />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
         </Route>
 
         <Route path="*" element={<p className="text-center text-slate-600">Page not found</p>} />

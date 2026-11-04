@@ -21,9 +21,10 @@
 - [x] Onboarding and mentor assignment (branch `feature/onboarding`)
 - [x] Tasks and mentor evaluation (branch `feature/tasks`)
 - [x] Final evaluation, internship completion and certificates (branch `feature/completion`)
+- [x] Admin dashboard: users, approvals and platform overview (branch `feature/admin`)
 
 ## Doing now
-- [ ] Admin dashboard: users, approvals and platform overview (branch `feature/admin`)
+- [ ] In-app notifications (branch feature/notifications).
 
 ## Next (in this order)
 1. Tasks, mentor feedback and evaluation.
@@ -42,3 +43,5 @@
 - Mentors: a company invites a mentor by email, and the mentor must accept (table mentor_links). Only accepted mentors can be assigned to interns. A mentor with active interns cannot be removed. Mentors see only an intern's name, email, internship and dates, never profile, scores or feedback. Known limitation: the invite endpoint reveals whether an email belongs to a mentor account (to harden later).
 - Tasks: only the intern's currently assigned mentor can create, edit, delete or review tasks (a reassigned mentor gets 404). Due dates must fall inside the internship dates. Interns can submit only while the internship is running (late submissions are allowed and marked late). Review is approve (rating 1-5) or request changes (comments required); a resubmission clears the previous rating and comments. Tasks can be edited or deleted only before any submission.
 - Completion: the assigned mentor writes the final evaluation after the end date (editable until completed). The company completes an internship only when it has ended, a mentor is assigned and has evaluated, and no submitted task awaits review. Completing issues a certificate (random code IF-XXXX-XXXX-XXXX, stored snapshot of names and dates) and locks the evaluation. Public page /verify/:code (endpoint /api/public/certificates/{code}) shows only code, student name, internship, company, dates and issue date. Not built yet: certificate revocation and rate limiting on verification.
+- Admin: the first admin is created at startup from app.admin.email and app.admin.password in application-local.properties (only when no admin exists). New company accounts start unapproved and cannot publish internships until an admin approves them. A disabled account's token stops working at once (the JWT decoder checks the account on every request). An admin cannot disable themselves or the last active admin.
+- One-week plan is in InternFlow_Remaining_Work.xlsx (sheet "One-week plan").
