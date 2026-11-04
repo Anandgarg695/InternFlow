@@ -15,10 +15,11 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800">
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm print:hidden">
         <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/" className="text-xl font-bold text-indigo-600">InternFlow</Link>
           <div className="flex items-center gap-4 text-sm">
+            <Link to="/verify" className="hover:text-indigo-600">Verify certificate</Link>
             {user ? (
               <>
                 <Link to={dashboardPath(user.role)} className="hover:text-indigo-600">Dashboard</Link>

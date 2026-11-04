@@ -1,6 +1,11 @@
 import axios from 'axios'
 import { loadAuth, clearAuth } from './tokenStorage'
 
+// For public pages: no login token is attached and no redirect to the login page happens
+export const publicApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8081/api',
+})
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8081/api',
 })

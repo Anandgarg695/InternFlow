@@ -102,6 +102,12 @@ export default function MentorInterns() {
                   >
                     Tasks and feedback
                   </Link>
+                  <Link
+                    to={`/mentor/interns/${p.id}/evaluation`}
+                    className="mt-2 ml-4 inline-block text-sm text-indigo-600 hover:underline"
+                  >
+                    Final evaluation
+                  </Link>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${phase.style}`}>{phase.label}</span>
               </div>
