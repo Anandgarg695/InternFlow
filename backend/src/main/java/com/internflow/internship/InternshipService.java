@@ -92,6 +92,12 @@ public class InternshipService {
                 throw new ApiException(HttpStatus.CONFLICT,
                         "Add your company name in your company profile before publishing");
             }
+                    boolean approved = companyProfileRepository.findByUserId(companyId)
+                    .map(profile -> profile.getUser().isApproved()).orElse(false);
+            if (!approved) {
+                throw new ApiException(HttpStatus.CONFLICT,
+                        "Your company account is waiting for admin approval. You can publish after it is approved");
+            }
             if (internship.getApplicationDeadline().isBefore(today())) {
                 throw new ApiException(HttpStatus.CONFLICT,
                         "The application deadline has passed. Edit the internship and choose a new deadline first");

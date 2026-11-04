@@ -45,6 +45,8 @@ public class AuthService {
         user.setFullName(request.fullName().trim());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(role);
+        // New companies must be approved by an admin before they can publish internships
+        user.setApproved(request.role() != AuthDtos.RegistrationRole.COMPANY);
         userRepository.save(user);
         return UserResponse.from(user);
     }
