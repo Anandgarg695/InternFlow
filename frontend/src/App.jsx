@@ -29,6 +29,10 @@ import StudentPlacements from './pages/StudentPlacements'
 import MentorInterns from './pages/MentorInterns'
 import MentorTasks from './pages/MentorTasks'
 import StudentTasks from './pages/StudentTasks'
+import MentorEvaluation from './pages/MentorEvaluation'
+import CompanyInternProgress from './pages/CompanyInternProgress'
+import StudentCompletion from './pages/StudentCompletion'
+import VerifyCertificate from './pages/VerifyCertificate'
 
 function App() {
   return (
@@ -37,6 +41,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify" element={<VerifyCertificate />} />
+        <Route path="/verify/:code" element={<VerifyCertificate />} />
 
         <Route element={<ProtectedRoute role="STUDENT" />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
@@ -50,6 +56,7 @@ function App() {
           <Route path="/student/offers" element={<StudentOffers />} />
           <Route path="/student/placements" element={<StudentPlacements />} />
           <Route path="/student/placements/:placementId/tasks" element={<StudentTasks />} />
+          <Route path="/student/placements/:placementId/completion" element={<StudentCompletion />} />
         </Route>
         <Route element={<ProtectedRoute role="COMPANY" />}>
           <Route path="/company/dashboard" element={<CompanyDashboard />} />
@@ -64,11 +71,13 @@ function App() {
           <Route path="/company/internships/:id/offers" element={<CompanyOffers />} />
           <Route path="/company/mentors" element={<CompanyMentors />} />
           <Route path="/company/internships/:id/interns" element={<CompanyInterns />} />
+          <Route path="/company/placements/:id" element={<CompanyInternProgress />} />
         </Route>
         <Route element={<ProtectedRoute role="MENTOR" />}>
           <Route path="/mentor/dashboard" element={<MentorDashboard />} />
           <Route path="/mentor/interns" element={<MentorInterns />} />
           <Route path="/mentor/interns/:placementId/tasks" element={<MentorTasks />} />
+          <Route path="/mentor/interns/:placementId/evaluation" element={<MentorEvaluation />} />
         </Route>
         <Route element={<ProtectedRoute role="ADMIN" />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />

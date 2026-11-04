@@ -89,6 +89,12 @@ export default function CompanyInterns() {
                   <p className="mt-1 text-sm text-slate-600">
                     {formatDate(p.startDate)} to {formatDate(p.endDate)}
                   </p>
+                  <Link
+                    to={`/company/placements/${p.id}`}
+                    className="mt-2 inline-block text-sm text-indigo-600 hover:underline"
+                  >
+                    Progress and completion
+                  </Link>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${phase.style}`}>{phase.label}</span>
               </div>

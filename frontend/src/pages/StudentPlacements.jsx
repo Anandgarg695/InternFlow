@@ -51,6 +51,14 @@ export default function StudentPlacements() {
                   >
                     My tasks
                   </Link>
+                      {p.phase === 'COMPLETED' && (
+                  <Link
+                      to={`/student/placements/${p.id}/completion`}
+                      className="mt-2 ml-4 inline-block text-sm text-indigo-600 hover:underline"
+                    >
+                      Final evaluation and certificate
+                  </Link>
+                  )}
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${phase.style}`}>{phase.label}</span>
               </div>
