@@ -34,6 +34,7 @@ import CompanyInternProgress from './pages/CompanyInternProgress'
 import StudentCompletion from './pages/StudentCompletion'
 import VerifyCertificate from './pages/VerifyCertificate'
 import AdminUsers from './pages/AdminUsers'
+import Notifications from './pages/Notifications'
 
 function App() {
   return (
@@ -44,6 +45,10 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyCertificate />} />
         <Route path="/verify/:code" element={<VerifyCertificate />} />
+        
+        <Route element={<ProtectedRoute />}>
+        <Route path="/notifications" element={<Notifications />} />
+        </Route>
 
         <Route element={<ProtectedRoute role="STUDENT" />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />

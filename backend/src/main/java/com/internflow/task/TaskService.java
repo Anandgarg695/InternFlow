@@ -17,9 +17,14 @@ import com.internflow.task.TaskDtos.ReviewRequest;
 import com.internflow.task.TaskDtos.SubmissionRequest;
 import com.internflow.task.TaskDtos.TaskRequest;
 import com.internflow.task.TaskDtos.TaskResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.internflow.notification.NotificationService;
 
 @Service
 public class TaskService {
+
+    @Autowired
+    private NotificationService notifications;
 
     // Dates are calendar dates in Indian time, even though the server runs in UTC
     private static final ZoneId ZONE = ZoneId.of("Asia/Kolkata");
@@ -50,6 +55,9 @@ public class TaskService {
         InternTask task = new InternTask();
         task.setPlacementId(placementId);
         task.setStatus(InternTask.Status.ASSIGNED);
+                notifications.send(placement.getStudentId(), "New task",
+                "Your mentor assigned you a task: " + request.title().trim(),
+                "/student/placements/" + placementId + "/tasks");
         apply(task, request);
         taskRepository.save(task);
         return toResponse(task);
@@ -103,6 +111,10 @@ public class TaskService {
         }
         task.setFeedback(feedback);
         task.setReviewedAt(Instant.now());
+                placementRepository.findById(task.getPlacementId()).ifPresent(p ->
+                notifications.send(p.getStudentId(), "Task reviewed",
+                        "Your mentor reviewed: " + task.getTitle(),
+                        "/student/placements/" + p.getId() + "/tasks"));
         taskRepository.save(task);
         return toResponse(task);
     }
@@ -145,6 +157,11 @@ public class TaskService {
         task.setSubmissionLink(clean(request.link()));
         task.setSubmittedAt(Instant.now());
         task.setStatus(InternTask.Status.SUBMITTED);
+                if (placement.getMentorId() != null) {
+            notifications.send(placement.getMentorId(), "Work submitted",
+                    "An intern submitted work for: " + task.getTitle(),
+                    "/mentor/interns/" + placement.getId() + "/tasks");
+        }
         // A resubmission starts a fresh review
         task.setRating(null);
         task.setFeedback(null);
