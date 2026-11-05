@@ -2,6 +2,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { logout } from '../store/authActions'
 import { dashboardPath } from '../utils/roles'
+import NotificationBell from './NotificationBell'
 
 export default function Layout() {
   const user = useSelector((state) => state.auth.user)
@@ -23,6 +24,7 @@ export default function Layout() {
             {user ? (
               <>
                 <Link to={dashboardPath(user.role)} className="hover:text-indigo-600">Dashboard</Link>
+                                   <NotificationBell />
                 <span className="text-slate-500">{user.fullName} ({user.role})</span>
                 <button
                   onClick={onLogout}

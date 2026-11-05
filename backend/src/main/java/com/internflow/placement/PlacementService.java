@@ -24,9 +24,14 @@ import com.internflow.placement.PlacementDtos.MentorInternResponse;
 import com.internflow.placement.PlacementDtos.StudentPlacementResponse;
 import com.internflow.user.User;
 import com.internflow.user.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.internflow.notification.NotificationService;
 
 @Service
 public class PlacementService {
+
+    @Autowired
+    private NotificationService notifications;
 
     // Dates are calendar dates in Indian time, even though the server runs in UTC
     private static final ZoneId ZONE = ZoneId.of("Asia/Kolkata");
@@ -109,6 +114,12 @@ public class PlacementService {
             }
         }
         placement.setMentorId(mentorId);
+                if (mentorId != null) {
+            notifications.send(mentorId, "New intern assigned",
+                    "A company assigned an intern to you.", "/mentor/interns");
+            notifications.send(placement.getStudentId(), "Mentor assigned",
+                    "A mentor was assigned to your internship.", "/student/placements");
+        }
         placementRepository.save(placement);
 
         Map<Long, User> users = usersById(

@@ -1,6 +1,6 @@
 # InternFlow Progress
 
-**Last updated:** 2026-11-04
+**Last updated:** 2026-11-05
 **Repository:** https://github.com/Anandgarg695/InternFlow (public)
 **How to run, setup, rules and fixes:** see [SETUP.md](SETUP.md)
 
@@ -22,9 +22,10 @@
 - [x] Tasks and mentor evaluation (branch `feature/tasks`)
 - [x] Final evaluation, internship completion and certificates (branch `feature/completion`)
 - [x] Admin dashboard: users, approvals and platform overview (branch `feature/admin`)
+- [x] In-app notifications (branch feature/notifications).
 
 ## Doing now
-- [ ] In-app notifications (branch feature/notifications).
+- [ ] Skill-gap engine and demo data (branch feature/skillgap).
 
 ## Next (in this order)
 1. Tasks, mentor feedback and evaluation.
@@ -45,3 +46,4 @@
 - Completion: the assigned mentor writes the final evaluation after the end date (editable until completed). The company completes an internship only when it has ended, a mentor is assigned and has evaluated, and no submitted task awaits review. Completing issues a certificate (random code IF-XXXX-XXXX-XXXX, stored snapshot of names and dates) and locks the evaluation. Public page /verify/:code (endpoint /api/public/certificates/{code}) shows only code, student name, internship, company, dates and issue date. Not built yet: certificate revocation and rate limiting on verification.
 - Admin: the first admin is created at startup from app.admin.email and app.admin.password in application-local.properties (only when no admin exists). New company accounts start unapproved and cannot publish internships until an admin approves them. A disabled account's token stops working at once (the JWT decoder checks the account on every request). An admin cannot disable themselves or the last active admin.
 - One-week plan is in InternFlow_Remaining_Work.xlsx (sheet "One-week plan").
+- Notifications: table notifications, API /api/notifications (list, unread-count, read, read-all) for any logged-in user. Other services create them with notifications.send(userId, title, message, "/internal/path") (injected with @Autowired). The bell polls every 30 seconds and after each page change (no WebSockets). Only internal paths are stored as links.

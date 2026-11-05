@@ -27,9 +27,14 @@ import com.internflow.profile.CompanyProfile;
 import com.internflow.profile.CompanyProfileRepository;
 import com.internflow.user.User;
 import com.internflow.user.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.internflow.notification.NotificationService;
 
 @Service
 public class InterviewService {
+
+    @Autowired
+    private NotificationService notifications;
 
     private static final List<Interview.Status> ACTIVE = List.of(
             Interview.Status.SCHEDULED, Interview.Status.CONFIRMED, Interview.Status.RESCHEDULE_REQUESTED);
@@ -67,6 +72,11 @@ public class InterviewService {
         }
         checkAvailability(application.getStudentId(), request.scheduledAt(), request.durationMinutes(), null);
 
+        String internshipTitle = internshipRepository.findById(application.getInternshipId())
+                .map(Internship::getTitle).orElse("your internship");
+        notifications.send(application.getStudentId(), "Interview scheduled",
+                "An interview for " + internshipTitle + " was scheduled. Check the time and details.",
+                "/student/interviews");
         Interview interview = new Interview();
         interview.setApplicationId(applicationId);
         interview.setStudentId(application.getStudentId());

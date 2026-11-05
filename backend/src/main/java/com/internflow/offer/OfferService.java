@@ -32,9 +32,14 @@ import com.internflow.profile.CompanyProfileRepository;
 import com.internflow.user.User;
 import com.internflow.user.UserRepository;
 import com.internflow.placement.PlacementService;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.internflow.notification.NotificationService;
 
 @Service
 public class OfferService {
+
+    @Autowired
+    private NotificationService notifications;
 
     // Dates are calendar dates in Indian time, even though the server runs in UTC
     private static final ZoneId ZONE = ZoneId.of("Asia/Kolkata");
@@ -102,6 +107,9 @@ public class OfferService {
         offerRepository.save(offer);
 
         application.setStatus(ApplicationStatus.OFFERED);
+                notifications.send(application.getStudentId(), "You received an offer",
+                "A company made you an offer for " + internship.getTitle() + ". Respond before it expires.",
+                "/student/offers");
         applicationRepository.save(application);
         return toCompanyResponses(List.of(offer)).get(0);
     }
@@ -185,6 +193,9 @@ public class OfferService {
         offerRepository.save(offer);
         setApplicationStatus(offer.getApplicationId(), ApplicationStatus.OFFERED, ApplicationStatus.SELECTED);
         placementService.createFor(offer.getApplicationId(), internship, offer.getStudentId(), offer.getStartDate());
+                notifications.send(internship.getCompanyId(), "Offer accepted",
+                "A student accepted your offer for " + internship.getTitle() + ".",
+                "/company/internships/" + internship.getId() + "/interns");
 
         // The last opening is filled: stop taking new applications
         if (accepted + 1 >= internship.getOpenings() && internship.getStatus() != InternshipStatus.CLOSED) {

@@ -20,9 +20,14 @@ import com.internflow.user.User;
 import com.internflow.user.UserRepository;
 
 import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.internflow.notification.NotificationService;
 
 @Service
 public class AdminService {
+
+    @Autowired
+    private NotificationService notifications;
 
     private static final Set<String> ROLES = Set.of("STUDENT", "COMPANY", "MENTOR", "ADMIN");
 
@@ -105,6 +110,11 @@ public class AdminService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Only company accounts need approval");
         }
         user.setApproved(approved);
+                if (approved) {
+            notifications.send(user.getId(), "Company approved",
+                    "Your company account was approved. You can publish internships now.",
+                    "/company/internships");
+        }
         userRepository.save(user);
         return toResponse(user);
     }

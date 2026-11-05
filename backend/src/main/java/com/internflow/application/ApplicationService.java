@@ -25,10 +25,14 @@ import com.internflow.profile.StudentProfile;
 import com.internflow.profile.StudentProfileRepository;
 import com.internflow.user.User;
 import com.internflow.user.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.internflow.notification.NotificationService;
 
 @Service
 public class ApplicationService {
 
+    @Autowired
+    private NotificationService notifications;
     private final InternshipApplicationRepository applicationRepository;
     private final InternshipRepository internshipRepository;
     private final InternshipService internshipService;
@@ -52,7 +56,7 @@ public class ApplicationService {
 
     // ---------------------------------------------------------------- student side
 
-    @Transactional
+       @Transactional
     public StudentApplicationResponse apply(Long studentId, ApplyRequest request) {
         Internship internship = internshipService.requireAcceptingApplications(request.internshipId());
 
@@ -71,6 +75,10 @@ public class ApplicationService {
         application.setCoverNote(clean(request.coverNote()));
         application.setStatus(ApplicationStatus.APPLIED);
         applicationRepository.save(application);
+
+        notifications.send(internship.getCompanyId(), "New application",
+                "A student applied for " + internship.getTitle() + ".",
+                "/company/internships/" + internship.getId() + "/applicants");
         return toStudentResponses(List.of(application)).get(0);
     }
 
@@ -107,9 +115,12 @@ public class ApplicationService {
     public ApplicantResponse decide(Long companyId, Long applicationId, Decision decision) {
         InternshipApplication application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Application not found"));
-        internshipRepository.findByIdAndCompanyId(application.getInternshipId(), companyId)
+        Internship internship = internshipRepository.findByIdAndCompanyId(application.getInternshipId(), companyId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Application not found"));
 
+        if (application.getStatus() == ApplicationStatus.WITHDRAWN) {
+            throw new ApiException(HttpStatus.CONFLICT, "The student withdrew this application");
+        }
         if (application.getStatus() == ApplicationStatus.OFFERED
                 || application.getStatus() == ApplicationStatus.SELECTED) {
             throw new ApiException(HttpStatus.CONFLICT,
@@ -122,6 +133,10 @@ public class ApplicationService {
                 application.setCurrentRound(1);
             }
             applicationRepository.save(application);
+            notifications.send(application.getStudentId(), "Application update",
+                    "Your application for " + internship.getTitle() + " was "
+                            + (target == ApplicationStatus.SHORTLISTED ? "shortlisted." : "not selected to move forward."),
+                    "/student/applications");
         }
         return toApplicantResponses(List.of(application)).get(0);
     }

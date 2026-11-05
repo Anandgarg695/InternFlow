@@ -27,9 +27,14 @@ import com.internflow.task.InternTask;
 import com.internflow.task.InternTaskRepository;
 import com.internflow.user.User;
 import com.internflow.user.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.internflow.notification.NotificationService;
 
 @Service
 public class CompletionService {
+
+    @Autowired
+    private NotificationService notifications;
 
     // Dates are calendar dates in Indian time, even though the server runs in UTC
     private static final ZoneId ZONE = ZoneId.of("Asia/Kolkata");
@@ -116,6 +121,9 @@ public class CompletionService {
         placement.setStatus(Placement.Status.COMPLETED);
         placementRepository.save(placement);
         issueCertificate(placement);
+                notifications.send(placement.getStudentId(), "Internship completed",
+                "Your internship is complete and your certificate is ready.",
+                "/student/placements/" + placement.getId() + "/completion");
         return buildProgress(placement);
     }
 
