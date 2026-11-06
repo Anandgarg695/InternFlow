@@ -71,7 +71,10 @@ export default function CompanyApplicants() {
       .filter((r) => r.applicationId === applicant.id)
       .sort((x, y) => x.roundNumber - y.roundNumber)
     const lines = results.map((r) => {
-      if (r.state === 'SUBMITTED') return `Round ${r.roundNumber}: ${r.score} / ${r.total}`
+      if (r.state === 'SUBMITTED') {
+        if (r.roundType === 'THEORY' && r.score === null) return `Round ${r.roundNumber} (Theory): submitted (needs grading)`
+        return `Round ${r.roundNumber} (${r.roundType || 'MCQ'}): ${r.score} / ${r.total}`
+      }
       if (r.state === 'EXPIRED') return `Round ${r.roundNumber}: time ran out, no score`
       return `Round ${r.roundNumber}: in progress`
     })
@@ -245,6 +248,16 @@ export default function CompanyApplicants() {
                   </span>
                 ) : (
                   <>
+                    {shortlisted && testInfo.testExists && (
+                      testInfo.results.some((r) => r.applicationId === a.id && r.roundType === 'THEORY' && r.state === 'SUBMITTED') && (
+                        <Link
+                          to={`/company/internships/${id}/rounds/${a.currentRound}/grade/${a.id}`}
+                          className="rounded-md bg-purple-600 px-3 py-1.5 text-white hover:bg-purple-500 text-sm font-medium"
+                        >
+                          Grade Written Theory
+                        </Link>
+                      )
+                    )}
                     {shortlisted && testInfo.testExists && a.currentRound < testInfo.totalRounds && (
                       <button
                         onClick={() => advance(a.id)}

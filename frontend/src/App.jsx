@@ -35,6 +35,7 @@ import StudentCompletion from './pages/StudentCompletion'
 import VerifyCertificate from './pages/VerifyCertificate'
 import AdminUsers from './pages/AdminUsers'
 import Notifications from './pages/Notifications'
+import CompanyGradeTheory from './pages/CompanyGradeTheory'
 
 function App() {
   return (
@@ -45,10 +46,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyCertificate />} />
         <Route path="/verify/:code" element={<VerifyCertificate />} />
-        
-        <Route element={<ProtectedRoute />}>
         <Route path="/notifications" element={<Notifications />} />
-        </Route>
 
         <Route element={<ProtectedRoute role="STUDENT" />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
@@ -58,7 +56,6 @@ function App() {
           <Route path="/student/applications" element={<StudentApplications />} />
           <Route path="/student/applications/:id/test" element={<StudentTest />} />
           <Route path="/student/interviews" element={<StudentInterviews />} />
-          <Route path="/student/offers" element={<StudentOffers />} />
           <Route path="/student/offers" element={<StudentOffers />} />
           <Route path="/student/placements" element={<StudentPlacements />} />
           <Route path="/student/placements/:placementId/tasks" element={<StudentTasks />} />
@@ -73,6 +70,7 @@ function App() {
           <Route path="/company/internships/:id/applicants" element={<CompanyApplicants />} />
           <Route path="/company/internships/:id/rounds" element={<CompanyRounds />} />
           <Route path="/company/internships/:id/rounds/:round" element={<CompanyTest />} />
+          <Route path="/company/internships/:id/rounds/:round/grade/:applicationId" element={<CompanyGradeTheory />} />
           <Route path="/company/internships/:id/interviews" element={<CompanyInterviews />} />
           <Route path="/company/internships/:id/offers" element={<CompanyOffers />} />
           <Route path="/company/mentors" element={<CompanyMentors />} />
@@ -96,4 +94,4 @@ function App() {
   )
 }
 
-export default App 
+export default App
