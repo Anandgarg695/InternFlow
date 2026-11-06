@@ -98,14 +98,15 @@ export default function CompanyInterviews() {
       location: form.mode === 'ONSITE' ? blankToNull(form.location) : null,
       notes: blankToNull(form.notes),
     }
+
     try {
       if (editingId) {
-        await api.put(`/company/interviews/${editingId}`, payload)
+        await api.patch(`/company/interviews/${editingId}/reschedule`, payload)
       } else {
         await api.post(`/company/applications/${form.applicationId}/interviews`, payload)
       }
-      setEditingId(null)
       setForm(EMPTY)
+      setEditingId(null)
       await load()
     } catch (err) {
       const data = err.response?.data
@@ -116,11 +117,11 @@ export default function CompanyInterviews() {
     }
   }
 
-  const cancel = async (interviewId) => {
-    if (!window.confirm('Cancel this interview?')) return
+  const cancel = async (ivId) => {
+    if (!window.confirm('Cancel this interview? The student will be notified.')) return
     setError('')
     try {
-      await api.patch(`/company/interviews/${interviewId}/cancel`)
+      await api.patch(`/company/interviews/${ivId}/cancel`)
       await load()
     } catch (err) {
       setError(err.response?.data?.error || 'Could not cancel the interview')
@@ -137,66 +138,85 @@ export default function CompanyInterviews() {
       setCompleting(null)
       await load()
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not save the result')
+      const data = err.response?.data
+      setError(data?.error || 'Could not complete the interview')
     }
   }
 
-  if (loading) return <p className="text-slate-600">Loading...</p>
-
   const fieldError = (name) =>
-    fieldErrors[name] && <p className="mt-1 text-sm text-red-600">{fieldErrors[name]}</p>
+    fieldErrors[name] ? <p className="mt-1 text-xs text-red-600">{fieldErrors[name]}</p> : null
+
+  if (loading) return <p className="text-slate-600">Loading interviews...</p>
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-4xl">
       <Link to="/company/internships" className="text-sm text-slate-600 hover:text-indigo-600">
-        ← Back to my internships
+        ← Back to internships
       </Link>
-      <h1 className="mt-2 text-2xl font-bold text-indigo-600">Interviews</h1>
-      {title && <p className="text-slate-600">{title}</p>}
+      <h1 className="mt-2 text-2xl font-bold text-indigo-600">Interviews: {title}</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Only shortlisted applicants can be interviewed. Times use your computer's time zone.
+        Schedule technical or HR rounds with shortlisted applicants.
       </p>
 
+      {/* Schedule / reschedule form */}
       <form onSubmit={onSubmit} className="mt-6 space-y-4 rounded-xl bg-white p-6 shadow">
-        <h2 className="font-semibold">{editingId ? 'Reschedule interview' : 'Schedule an interview'}</h2>
+        <h2 className="text-lg font-semibold">
+          {editingId ? 'Reschedule interview' : 'Schedule a new interview'}
+        </h2>
 
-        <div>
-          <label className="block text-sm font-medium" htmlFor="applicationId">Applicant</label>
-          <select
-            id="applicationId"
-            name="applicationId"
-            required
-            disabled={Boolean(editingId)}
-            value={form.applicationId}
-            onChange={onChange}
-            className={inputClass}
-          >
-            <option value="">Select a shortlisted applicant</option>
-            {shortlisted.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.studentName} (round {a.currentRound})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
+        {!editingId && (
           <div>
-            <label className="block text-sm font-medium" htmlFor="type">Interview type</label>
-            <select id="type" name="type" value={form.type} onChange={onChange} className={inputClass}>
-              {Object.entries(INTERVIEW_TYPES).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+            <label className="block text-sm font-medium" htmlFor="applicationId">Shortlisted candidate</label>
+            <select
+              id="applicationId"
+              name="applicationId"
+              required
+              value={form.applicationId}
+              onChange={onChange}
+              className={inputClass}
+            >
+              <option value="">Choose a student</option>
+              {shortlisted.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.studentName} ({a.studentEmail})
+                </option>
               ))}
             </select>
+            {shortlisted.length === 0 && (
+              <p className="mt-1 text-xs text-slate-500">
+                You do not have any shortlisted applicants yet for this internship.
+              </p>
+            )}
+            {fieldError('applicationId')}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium" htmlFor="type">Type of interview</label>
+            <select id="type" name="type" value={form.type} onChange={onChange} className={inputClass}>
+              {Object.entries(INTERVIEW_TYPES).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+            {fieldError('type')}
           </div>
           <div>
             <label className="block text-sm font-medium" htmlFor="mode">Mode</label>
             <select id="mode" name="mode" value={form.mode} onChange={onChange} className={inputClass}>
-              {Object.entries(INTERVIEW_MODES).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+              {Object.entries(INTERVIEW_MODES).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
               ))}
             </select>
+            {fieldError('mode')}
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium" htmlFor="scheduledAt">Date and time</label>
             <input
@@ -231,15 +251,14 @@ export default function CompanyInterviews() {
         {form.mode === 'ONLINE' ? (
           <div>
             <label className="block text-sm font-medium" htmlFor="meetingLink">
-              Meeting link (Google Meet, Zoom...), must start with https://
+              External Meeting Link (Optional - built-in video room will also be available)
             </label>
             <input
               id="meetingLink"
               name="meetingLink"
-              required
               value={form.meetingLink}
               onChange={onChange}
-              placeholder="https://meet.google.com/..."
+              placeholder="https://meet.google.com/... (optional)"
               className={inputClass}
             />
             {fieldError('meetingLink')}
@@ -305,11 +324,30 @@ export default function CompanyInterviews() {
                   <p className="text-sm text-slate-600">
                     {formatWhen(iv.scheduledAt)} · {iv.durationMinutes} min · {INTERVIEW_MODES[iv.mode]}
                   </p>
-                  {iv.mode === 'ONLINE' && link && (
-                    <a href={link} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">
-                      Meeting link
-                    </a>
+
+                  {iv.mode === 'ONLINE' && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {iv.roomCode && (
+                        <Link
+                          to={`/interview-room/${iv.roomCode}`}
+                          className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 shadow-sm transition-colors"
+                        >
+                          📹 Enter Video Call
+                        </Link>
+                      )}
+                      {link && !link.includes('/interview-room/') && (
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          External Link ↗
+                        </a>
+                      )}
+                    </div>
                   )}
+
                   {iv.mode === 'ONSITE' && iv.location && <p className="text-sm text-slate-600">{iv.location}</p>}
                   {iv.notes && <p className="mt-1 whitespace-pre-line text-sm text-slate-500">{iv.notes}</p>}
                 </div>
