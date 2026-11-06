@@ -33,8 +33,7 @@ export default function CompanyRounds() {
       <h1 className="mt-2 text-2xl font-bold text-indigo-600">Hiring rounds</h1>
       {title && <p className="text-slate-600">{title}</p>}
       <p className="mt-1 text-sm text-slate-500">
-        Shortlisted students start in round 1. After a student finishes a round, open the Applicants page
-        and move them to the next one.
+        Shortlisted students start in round 1. Rounds can be automated MCQ tests or written Theory rounds graded by your team.
       </p>
 
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
@@ -47,14 +46,23 @@ export default function CompanyRounds() {
         {rounds.map((r) => (
           <div key={r.roundNumber} className="flex items-center justify-between rounded-xl bg-white p-5 shadow">
             <div>
-              <p className="font-semibold">Round {r.roundNumber}: {r.title}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold">Round {r.roundNumber}: {r.title}</p>
+                <span
+                  className={`rounded px-2 py-0.5 text-xs font-semibold ${
+                    r.roundType === 'THEORY' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                  }`}
+                >
+                  {r.roundType === 'THEORY' ? 'Written Theory' : 'MCQ'}
+                </span>
+              </div>
               <p className="text-sm text-slate-600">
                 {r.questionCount} questions · {r.durationMinutes} minutes
                 {r.locked ? ' · locked (students have started)' : ''}
               </p>
             </div>
             <Link
-              to={`/company/internships/${id}/rounds/${r.roundNumber}`}
+              to={`/company/internships/${id}/rounds/${r.roundNumber}?type=${r.roundType || 'MCQ'}`}
               className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
             >
               {r.locked ? 'View' : 'Edit'}
@@ -64,12 +72,20 @@ export default function CompanyRounds() {
       </div>
 
       {nextRound <= MAX_ROUNDS && (
-        <Link
-          to={`/company/internships/${id}/rounds/${nextRound}`}
-          className="mt-6 inline-block rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500"
-        >
-          Add round {nextRound}
-        </Link>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            to={`/company/internships/${id}/rounds/${nextRound}?type=MCQ`}
+            className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500"
+          >
+            + Add Round {nextRound} (MCQ Test)
+          </Link>
+          <Link
+            to={`/company/internships/${id}/rounds/${nextRound}?type=THEORY`}
+            className="rounded-md bg-purple-600 px-4 py-2 text-white hover:bg-purple-500"
+          >
+            + Add Round {nextRound} (Written Theory)
+          </Link>
+        </div>
       )}
     </div>
   )
