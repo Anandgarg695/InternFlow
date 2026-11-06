@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public final class InterviewDtos {
@@ -20,7 +19,6 @@ public final class InterviewDtos {
             @NotNull Interview.Mode mode,
             @NotNull Instant scheduledAt,
             @NotNull @Min(15) @Max(180) Integer durationMinutes,
-            @Pattern(regexp = "^https://.{3,}$", message = "Meeting link must start with https://")
             @Size(max = 500) String meetingLink,
             @Size(max = 200) String location,
             @Size(max = 1000) String notes) {
@@ -44,6 +42,7 @@ public final class InterviewDtos {
             Interview.Mode mode,
             Instant scheduledAt,
             int durationMinutes,
+            String roomCode,
             String meetingLink,
             String location,
             String notes,
@@ -64,10 +63,46 @@ public final class InterviewDtos {
             Interview.Mode mode,
             Instant scheduledAt,
             int durationMinutes,
+            String roomCode,
             String meetingLink,
             String location,
             String notes,
             Interview.Status status,
             String rescheduleReason) {
+    }
+
+    // Video Room DTOs
+    public record VideoRoomResponse(
+            String roomCode,
+            Long interviewId,
+            String role,
+            String studentName,
+            String companyName,
+            String internshipTitle,
+            Instant scheduledAt,
+            int durationMinutes,
+            Interview.Status status) {
+    }
+
+    public record SignalMessage(
+            String fromRole,
+            String type,
+            String payload,
+            Instant timestamp) {
+    }
+
+    public record SignalRequest(
+            @NotBlank String type,
+            @NotBlank String payload) {
+    }
+
+    public record ChatMessage(
+            String sender,
+            String text,
+            Instant timestamp) {
+    }
+
+    public record ChatRequest(
+            @NotBlank @Size(max = 2000) String text) {
     }
 }

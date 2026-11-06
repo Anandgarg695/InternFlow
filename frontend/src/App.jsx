@@ -36,6 +36,7 @@ import VerifyCertificate from './pages/VerifyCertificate'
 import AdminUsers from './pages/AdminUsers'
 import Notifications from './pages/Notifications'
 import CompanyGradeTheory from './pages/CompanyGradeTheory'
+import InterviewRoom from './pages/InterviewRoom'
 
 function App() {
   return (
@@ -47,6 +48,11 @@ function App() {
         <Route path="/verify" element={<VerifyCertificate />} />
         <Route path="/verify/:code" element={<VerifyCertificate />} />
         <Route path="/notifications" element={<Notifications />} />
+
+        {/* Authenticated Video Interview Room */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/interview-room/:roomCode" element={<InterviewRoom />} />
+        </Route>
 
         <Route element={<ProtectedRoute role="STUDENT" />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />

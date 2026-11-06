@@ -1,6 +1,7 @@
 package com.internflow.interview;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -58,6 +59,9 @@ public class Interview {
     @Column(name = "duration_minutes", nullable = false)
     private int durationMinutes;
 
+    @Column(name = "room_code", nullable = false, unique = true, length = 64)
+    private String roomCode;
+
     @Column(name = "meeting_link", length = 500)
     private String meetingLink;
 
@@ -89,6 +93,9 @@ public class Interview {
 
     @PrePersist
     void onCreate() {
+        if (roomCode == null || roomCode.isBlank()) {
+            roomCode = "room-" + UUID.randomUUID().toString();
+        }
         createdAt = Instant.now();
         updatedAt = createdAt;
     }

@@ -68,16 +68,30 @@ export default function StudentInterviews() {
             <p className="text-sm text-slate-600">
               {formatWhen(iv.scheduledAt)} · {iv.durationMinutes} min · {INTERVIEW_MODES[iv.mode]}
             </p>
-            {iv.mode === 'ONLINE' && link && (
-              <a
-                href={link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-500"
-              >
-                Join meeting
-              </a>
+
+            {iv.mode === 'ONLINE' && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {iv.roomCode && (
+                  <Link
+                    to={`/interview-room/${iv.roomCode}`}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3.5 py-1.5 text-sm font-semibold text-white hover:bg-indigo-500 shadow-sm transition-colors"
+                  >
+                    📹 Join Video Call
+                  </Link>
+                )}
+                {link && !link.includes('/interview-room/') && (
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    External Meeting Link ↗
+                  </a>
+                )}
+              </div>
             )}
+
             {iv.mode === 'ONSITE' && iv.location && (
               <p className="mt-1 text-sm text-slate-600">Location: {iv.location}</p>
             )}

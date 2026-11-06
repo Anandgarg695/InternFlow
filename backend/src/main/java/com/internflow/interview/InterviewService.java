@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,18 +24,14 @@ import com.internflow.interview.InterviewDtos.CompanyInterviewResponse;
 import com.internflow.interview.InterviewDtos.CompleteRequest;
 import com.internflow.interview.InterviewDtos.InterviewRequest;
 import com.internflow.interview.InterviewDtos.StudentInterviewResponse;
+import com.internflow.notification.NotificationService;
 import com.internflow.profile.CompanyProfile;
 import com.internflow.profile.CompanyProfileRepository;
 import com.internflow.user.User;
 import com.internflow.user.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import com.internflow.notification.NotificationService;
 
 @Service
 public class InterviewService {
-
-    @Autowired
-    private NotificationService notifications;
 
     private static final List<Interview.Status> ACTIVE = List.of(
             Interview.Status.SCHEDULED, Interview.Status.CONFIRMED, Interview.Status.RESCHEDULE_REQUESTED);
@@ -44,17 +41,20 @@ public class InterviewService {
     private final InternshipRepository internshipRepository;
     private final UserRepository userRepository;
     private final CompanyProfileRepository companyProfileRepository;
+    private final NotificationService notifications;
 
     public InterviewService(InterviewRepository interviewRepository,
             InternshipApplicationRepository applicationRepository,
             InternshipRepository internshipRepository,
             UserRepository userRepository,
-            CompanyProfileRepository companyProfileRepository) {
+            CompanyProfileRepository companyProfileRepository,
+            NotificationService notifications) {
         this.interviewRepository = interviewRepository;
         this.applicationRepository = applicationRepository;
         this.internshipRepository = internshipRepository;
         this.userRepository = userRepository;
         this.companyProfileRepository = companyProfileRepository;
+        this.notifications = notifications;
     }
 
     // ---------------------------------------------------------------- company side
@@ -82,6 +82,7 @@ public class InterviewService {
         interview.setStudentId(application.getStudentId());
         interview.setRoundNumber(Math.max(application.getCurrentRound(), 1));
         interview.setStatus(Interview.Status.SCHEDULED);
+        interview.setRoomCode("room-" + UUID.randomUUID().toString());
         apply(interview, request);
         interviewRepository.save(interview);
         return toCompanyResponses(List.of(interview)).get(0);
@@ -178,7 +179,7 @@ public class InterviewService {
                     internship == null ? null : internship.getTitle(),
                     internship == null ? null : companyNames.get(internship.getCompanyId()),
                     i.getRoundNumber(), i.getType(), i.getMode(), i.getScheduledAt(), i.getDurationMinutes(),
-                    i.getMeetingLink(), i.getLocation(), i.getNotes(), i.getStatus(), i.getRescheduleReason());
+                    i.getRoomCode(), i.getMeetingLink(), i.getLocation(), i.getNotes(), i.getStatus(), i.getRescheduleReason());
         }).toList();
     }
 
@@ -209,7 +210,6 @@ public class InterviewService {
     // ---------------------------------------------------------------- helpers
 
     private InternshipApplication ownedApplication(Long companyId, Long applicationId) {
-        // Someone else's application looks exactly like a missing one
         InternshipApplication application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Application not found"));
         internshipRepository.findByIdAndCompanyId(application.getInternshipId(), companyId)
@@ -230,11 +230,7 @@ public class InterviewService {
     private Interview ownLiveInterview(Long studentId, Long interviewId) {
         Interview interview = interviewRepository.findByIdAndStudentId(interviewId, studentId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Interview not found"));
-        InternshipApplication application = applicationRepository.findById(interview.getApplicationId())
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Interview not found"));
-        if (application.getStatus() != ApplicationStatus.SHORTLISTED) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Interview not found");
-        }
+        requireActive(interview, "This interview is no longer active");
         return interview;
     }
 
@@ -254,9 +250,6 @@ public class InterviewService {
         if (!r.scheduledAt().isAfter(Instant.now())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "The interview must be scheduled in the future");
         }
-        if (r.mode() == Interview.Mode.ONLINE && isBlank(r.meetingLink())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "A meeting link is required for online interviews");
-        }
         if (r.mode() == Interview.Mode.ONSITE && isBlank(r.location())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "A location is required for on-site interviews");
         }
@@ -267,12 +260,19 @@ public class InterviewService {
         i.setMode(r.mode());
         i.setScheduledAt(r.scheduledAt());
         i.setDurationMinutes(r.durationMinutes());
-        i.setMeetingLink(r.mode() == Interview.Mode.ONLINE ? clean(r.meetingLink()) : null);
+        if (i.getRoomCode() == null || i.getRoomCode().isBlank()) {
+            i.setRoomCode("room-" + UUID.randomUUID().toString());
+        }
+        if (r.mode() == Interview.Mode.ONLINE) {
+            String link = clean(r.meetingLink());
+            i.setMeetingLink(link != null ? link : "/interview-room/" + i.getRoomCode());
+        } else {
+            i.setMeetingLink(null);
+        }
         i.setLocation(r.mode() == Interview.Mode.ONSITE ? clean(r.location()) : null);
         i.setNotes(clean(r.notes()));
     }
 
-    // The student must not have another live interview that overlaps this time slot
     private void checkAvailability(Long studentId, Instant start, int minutes, Long ignoreInterviewId) {
         Instant end = start.plus(minutes, ChronoUnit.MINUTES);
 
@@ -288,7 +288,7 @@ public class InterviewService {
             }
             InternshipApplication a = applications.get(other.getApplicationId());
             if (a == null || a.getStatus() != ApplicationStatus.SHORTLISTED) {
-                continue; // belongs to a withdrawn or rejected application
+                continue;
             }
             Instant otherEnd = other.getScheduledAt().plus(other.getDurationMinutes(), ChronoUnit.MINUTES);
             if (start.isBefore(otherEnd) && end.isAfter(other.getScheduledAt())) {
@@ -315,7 +315,7 @@ public class InterviewService {
             return new CompanyInterviewResponse(i.getId(), i.getApplicationId(),
                     student == null ? null : student.getFullName(),
                     i.getRoundNumber(), i.getType(), i.getMode(), i.getScheduledAt(), i.getDurationMinutes(),
-                    i.getMeetingLink(), i.getLocation(), i.getNotes(), i.getStatus(), i.getRescheduleReason(),
+                    i.getRoomCode(), i.getMeetingLink(), i.getLocation(), i.getNotes(), i.getStatus(), i.getRescheduleReason(),
                     i.getOutcome(), i.getFeedback());
         }).toList();
     }
