@@ -25,13 +25,13 @@
 - [x] In-app notifications (branch `feature/notifications`)
 - [x] Skill-gap engine and demo data (branch `feature/skillgap`)
 - [x] Theory round: written answers graded by the company (branch `feature/theory-round`)
+- [x] Video interview integration: built-in WebRTC rooms with signaling, in-call chat, mic/camera/screen-share controls (branch `feature/video-interviews`)
 
 ## Doing now
-- [ ] Video interview integration.
+- [ ] Advanced analytics & reporting for companies.
 
 ## Next (in this order)
-1. Advanced analytics & reporting for companies.
-2. AI-assisted candidate shortlisting.
+1. AI-assisted candidate shortlisting.
 
 ## Notes for teammate
 - Add anything useful here: decisions, problems you hit, things to watch out for.
@@ -39,7 +39,8 @@
 - Application statuses: APPLIED, SHORTLISTED, REJECTED, WITHDRAWN. A withdrawn application is final (no re-apply). Students need a complete profile to apply.
 - Screening tests: one per internship, multiple choice (4 options), timed. The server owns the clock (deadline saved at start, 15 seconds of grace on submit). Correct answers are never sent to students. A test is locked once any student has started it.
 - Hiring rounds: each internship has ordered rounds (1 to 10) with one timed MCQ test each. Rounds must be created in order; only the last round can be deleted; a round locks once a student starts it. A shortlisted application has current_round (starts at 1). The company moves students forward manually, only after they submitted or timed out. Rounds without a test are allowed (used for interviews next).
-- Interviews: one active interview per application (enforced by a partial unique index). The server refuses overlapping times for the same student across companies. Online interviews need an https link; times are stored in UTC and shown in the browser's time zone. Outcome and feedback are private to the company. Video is link-based for now (Meet/Zoom); embedded video calling comes later.
+- Interviews: one active interview per application (enforced by a partial unique index). The server refuses overlapping times for the same student across companies. Online interviews automatically generate a secure built-in WebRTC room code (`room-<uuid>`), while optional external meeting links (Google Meet, Zoom) remain supported. Outcome and feedback are private to the company.
+- Video Interview Rooms: `/interview-room/:roomCode` offers browser-native WebRTC peer-to-peer video calling with audio/video toggles, screen sharing, and in-room chat. Signaling is handled via REST (`/api/interviews/room/{roomCode}/signal` and `/signals`) without external third-party dependencies.
 - Offers: application statuses now include OFFERED and SELECTED. Offers need a shortlisted applicant with no active interview, and are capped by the internship's openings (accepted plus pending). Accepting the last opening closes the internship automatically. Offers expire at the end of expires_on (Indian time); a once-a-minute job and every offer endpoint turn expired offers back into SHORTLISTED applications. Accepted offers cannot be withdrawn yet. Declining sets the application to WITHDRAWN.
 - Placements: created automatically when a student accepts an offer (start = offer start date, end = start + internship duration in weeks). Placement status is ACTIVE for now; the phase (starts soon, ongoing, ended) is worked out from the dates in Indian time.
 - Mentors: a company invites a mentor by email, and the mentor must accept (table mentor_links). Only accepted mentors can be assigned to interns. A mentor with active interns cannot be removed. Mentors see only an intern's name, email, internship and dates, never profile, scores or feedback. Known limitation: the invite endpoint reveals whether an email belongs to a mentor account (to harden later).
