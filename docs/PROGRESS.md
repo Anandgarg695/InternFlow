@@ -1,6 +1,6 @@
 # InternFlow Progress
 
-**Last updated:** 2026-11-05
+**Last updated:** 2026-11-06
 **Repository:** https://github.com/Anandgarg695/InternFlow (public)
 **How to run, setup, rules and fixes:** see [SETUP.md](SETUP.md)
 
@@ -22,15 +22,15 @@
 - [x] Tasks and mentor evaluation (branch `feature/tasks`)
 - [x] Final evaluation, internship completion and certificates (branch `feature/completion`)
 - [x] Admin dashboard: users, approvals and platform overview (branch `feature/admin`)
-- [x] In-app notifications (branch feature/notifications).
+- [x] In-app notifications (branch `feature/notifications`)
+- [x] Skill-gap engine and demo data (branch `feature/skillgap`)
 
 ## Doing now
-- [ ] Skill-gap engine and demo data (branch feature/skillgap).
+- [ ] Theory round (written answers graded by the company).
 
 ## Next (in this order)
-1. Tasks, mentor feedback and evaluation.
-2. Completion and certificates.
-3. Theory round (written answers graded by the company).
+1. Video interview integration.
+2. Advanced analytics & reporting for companies.
 
 ## Notes for teammate
 - Add anything useful here: decisions, problems you hit, things to watch out for.
@@ -47,3 +47,4 @@
 - Admin: the first admin is created at startup from app.admin.email and app.admin.password in application-local.properties (only when no admin exists). New company accounts start unapproved and cannot publish internships until an admin approves them. A disabled account's token stops working at once (the JWT decoder checks the account on every request). An admin cannot disable themselves or the last active admin.
 - One-week plan is in InternFlow_Remaining_Work.xlsx (sheet "One-week plan").
 - Notifications: table notifications, API /api/notifications (list, unread-count, read, read-all) for any logged-in user. Other services create them with notifications.send(userId, title, message, "/internal/path") (injected with @Autowired). The bell polls every 30 seconds and after each page change (no WebSockets). Only internal paths are stored as links.
+- Skill-gap & demo data: `SkillGapService` analyzes candidate skills against required skills, computing match percentages, matched skills, and learning recommendations. Endpoints `/api/student/skillgap/internship/{id}` and `/api/student/skillgap/scores` feed match badges and gap analysis directly into the student UI. `DemoDataSeeder` seeds comprehensive test data (students, companies, internships, screening tests, applications, and mentor link) on startup or via `POST /api/admin/seed-demo`.

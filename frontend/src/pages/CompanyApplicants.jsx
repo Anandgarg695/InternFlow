@@ -3,9 +3,25 @@ import { Link, useParams } from 'react-router-dom'
 import api from '../services/api'
 import { APPLICATION_STATUS, formatDateTime, safeUrl } from '../utils/application'
 
+function parseSkills(s) {
+  return (s || '').split(/[,;/\n]+/).map((x) => x.trim()).filter(Boolean)
+}
+
+function matchPercent(studentSkills, reqSkills) {
+  const req = parseSkills(reqSkills)
+  if (!req.length) return 100
+  const stu = new Set(parseSkills(studentSkills).map((x) => x.toLowerCase().replace(/[^a-z0-9]/g, '')))
+  const matched = req.filter((r) => {
+    const norm = r.toLowerCase().replace(/[^a-z0-9]/g, '')
+    return stu.has(norm) || Array.from(stu).some((s) => s.includes(norm) || norm.includes(s))
+  })
+  return Math.round((matched.length / req.length) * 100)
+}
+
 export default function CompanyApplicants() {
   const { id } = useParams()
   const [title, setTitle] = useState('')
+  const [skillsRequired, setSkillsRequired] = useState('')
   const [applicants, setApplicants] = useState([])
   const [testInfo, setTestInfo] = useState({ testExists: false, totalRounds: 0, results: [] })
   const [loading, setLoading] = useState(true)
@@ -19,6 +35,7 @@ export default function CompanyApplicants() {
     ])
       .then(([internship, list, results]) => {
         setTitle(internship.data.title)
+        setSkillsRequired(internship.data.skillsRequired || '')
         setApplicants(list.data)
         setTestInfo(results.data)
       })
@@ -58,10 +75,10 @@ export default function CompanyApplicants() {
       if (r.state === 'EXPIRED') return `Round ${r.roundNumber}: time ran out, no score`
       return `Round ${r.roundNumber}: in progress`
     })
-    const current = applicant.currentRound
-    const hasCurrent = results.some((r) => r.roundNumber === current)
-    if (applicant.status === 'SHORTLISTED' && current >= 1 && current <= testInfo.totalRounds && !hasCurrent) {
-      lines.push(`Round ${current}: not started`)
+    for (let r = 1; r <= applicant.currentRound && r <= testInfo.totalRounds; r++) {
+      if (!results.some((x) => x.roundNumber === r)) {
+        lines.push(`Round ${r}: not started yet`)
+      }
     }
     return lines
   }
@@ -73,48 +90,101 @@ export default function CompanyApplicants() {
       <Link to="/company/internships" className="text-sm text-slate-600 hover:text-indigo-600">
         ← Back to my internships
       </Link>
-      <h1 className="mt-2 text-2xl font-bold text-indigo-600">Applicants</h1>
-      {title && <p className="text-slate-600">{title}</p>}
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-indigo-600">Applicants</h1>
+          <p className="mt-1 text-slate-700">{title}</p>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            to={`/company/internships/${id}/rounds`}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
+          >
+            Manage test rounds
+          </Link>
+          <Link
+            to={`/company/internships/${id}/interviews`}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
+          >
+            Interviews
+          </Link>
+          <Link
+            to={`/company/internships/${id}/offers`}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
+          >
+            Offers
+          </Link>
+          <Link
+            to={`/company/internships/${id}/interns`}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
+          >
+            Interns
+          </Link>
+        </div>
+      </div>
 
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
       {applicants.length === 0 && !error && (
-        <p className="mt-6 rounded-xl bg-white p-6 text-slate-600 shadow">No applications yet.</p>
+        <p className="mt-6 rounded-xl bg-white p-6 text-slate-600 shadow">
+          No students have applied to this internship yet.
+        </p>
       )}
 
       <div className="mt-6 space-y-4">
         {applicants.map((a) => {
           const status = APPLICATION_STATUS[a.status]
-          const linkedin = safeUrl(a.linkedinUrl)
-          const github = safeUrl(a.githubUrl)
+          const shortlisted = a.status === 'SHORTLISTED'
           const withdrawn = a.status === 'WITHDRAWN'
           const hasOffer = a.status === 'OFFERED' || a.status === 'SELECTED'
+          const linkedin = safeUrl(a.linkedinUrl)
+          const github = safeUrl(a.githubUrl)
           const lines = roundLines(a)
-          const shortlisted = a.status === 'SHORTLISTED'
+          const match = skillsRequired ? matchPercent(a.skills, skillsRequired) : null
+
           return (
             <div key={a.id} className="rounded-xl bg-white p-6 shadow">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-lg font-semibold">{a.studentName}</h2>
-                  <p className="text-sm text-slate-600">
-                    {a.studentEmail}
-                    {a.phone ? ` · ${a.phone}` : ''}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">Applied on {formatDateTime(a.appliedAt)}</p>
+                  <h2 className="text-lg font-semibold text-slate-800">{a.fullName || 'Student'}</h2>
+                  <p className="text-sm text-slate-500">{a.email}</p>
+                  {a.phone && <p className="text-sm text-slate-500">{a.phone}</p>}
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-medium ${status.style}`}>
-                  {status.label}
-                </span>
+                <div className="flex items-center gap-2">
+                  {match !== null && (
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        match >= 75
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : match >= 50
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {match}% match
+                    </span>
+                  )}
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${status.style}`}>
+                    {status.label}
+                  </span>
+                </div>
               </div>
 
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="text-slate-500">Education</dt>
+                  <dt className="text-slate-500">University</dt>
+                  <dd className="font-medium">{a.university || '-'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Degree & branch</dt>
                   <dd className="font-medium">
-                    {[a.degree, a.branch].filter(Boolean).join(', ')}
-                    {a.university ? ` · ${a.university}` : ''}
-                    {a.graduationYear ? ` (${a.graduationYear})` : ''}
+                    {[a.degree, a.branch].filter(Boolean).join(' · ') || '-'}
                   </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Graduation year</dt>
+                  <dd className="font-medium">{a.graduationYear ?? '-'}</dd>
                 </div>
                 <div>
                   <dt className="text-slate-500">CGPA</dt>
@@ -168,11 +238,11 @@ export default function CompanyApplicants() {
                 )}
                 <span className="flex-1" />
                 {withdrawn || hasOffer ? (
-                      <span className="text-slate-500">
-                       {withdrawn
-                         ? 'The student withdrew this application.'
-                         : 'This applicant has an offer. Manage it on the Offers page.'}
-                     </span>
+                  <span className="text-slate-500">
+                    {withdrawn
+                      ? 'The student withdrew this application.'
+                      : 'This applicant has an offer. Manage it on the Offers page.'}
+                  </span>
                 ) : (
                   <>
                     {shortlisted && testInfo.testExists && a.currentRound < testInfo.totalRounds && (
@@ -194,7 +264,7 @@ export default function CompanyApplicants() {
                     {a.status !== 'REJECTED' && (
                       <button
                         onClick={() => decide(a.id, 'REJECTED')}
-                        className="rounded-md border border-red-300 px-3 py-1.5 text-red-600 hover:bg-red-50"
+                        className="rounded-md bg-red-600 px-3 py-1.5 text-white hover:bg-red-500"
                       >
                         Reject
                       </button>
