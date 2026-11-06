@@ -15,10 +15,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.internflow.screening.ScreeningDtos.AdvanceResponse;
+import com.internflow.screening.ScreeningDtos.GradeTheoryRequest;
 import com.internflow.screening.ScreeningDtos.RoundSummary;
 import com.internflow.screening.ScreeningDtos.TestRequest;
 import com.internflow.screening.ScreeningDtos.TestResponse;
 import com.internflow.screening.ScreeningDtos.TestResultsResponse;
+import com.internflow.screening.ScreeningDtos.TheorySubmissionReview;
+import com.internflow.screening.ScreeningDtos.TheoryTestRequest;
+import com.internflow.screening.ScreeningDtos.TheoryTestResponse;
 
 import jakarta.validation.Valid;
 
@@ -50,6 +54,19 @@ public class CompanyTestController {
         return service.save(companyId(jwt), internshipId, round, request);
     }
 
+    @GetMapping("/internships/{internshipId}/rounds/{round}/theory")
+    public TheoryTestResponse getTheory(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable("internshipId") Long internshipId, @PathVariable("round") int round) {
+        return service.getTheoryForCompany(companyId(jwt), internshipId, round);
+    }
+
+    @PutMapping("/internships/{internshipId}/rounds/{round}/theory")
+    public TheoryTestResponse saveTheory(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable("internshipId") Long internshipId, @PathVariable("round") int round,
+            @Valid @RequestBody TheoryTestRequest request) {
+        return service.saveTheory(companyId(jwt), internshipId, round, request);
+    }
+
     @DeleteMapping("/internships/{internshipId}/rounds/{round}/test")
     public ResponseEntity<Void> delete(@AuthenticationPrincipal Jwt jwt,
             @PathVariable("internshipId") Long internshipId, @PathVariable("round") int round) {
@@ -61,6 +78,20 @@ public class CompanyTestController {
     public TestResultsResponse results(@AuthenticationPrincipal Jwt jwt,
             @PathVariable("internshipId") Long internshipId) {
         return service.results(companyId(jwt), internshipId);
+    }
+
+    @GetMapping("/internships/{internshipId}/rounds/{round}/submissions/{applicationId}")
+    public TheorySubmissionReview getSubmission(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable("internshipId") Long internshipId, @PathVariable("round") int round,
+            @PathVariable("applicationId") Long applicationId) {
+        return service.getSubmissionReview(companyId(jwt), internshipId, round, applicationId);
+    }
+
+    @PostMapping("/internships/{internshipId}/rounds/{round}/submissions/{applicationId}/grade")
+    public TheorySubmissionReview gradeSubmission(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable("internshipId") Long internshipId, @PathVariable("round") int round,
+            @PathVariable("applicationId") Long applicationId, @Valid @RequestBody GradeTheoryRequest request) {
+        return service.gradeSubmission(companyId(jwt), internshipId, round, applicationId, request);
     }
 
     @PostMapping("/applications/{applicationId}/advance")

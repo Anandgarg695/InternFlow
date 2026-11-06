@@ -13,6 +13,9 @@ import com.internflow.screening.ScreeningDtos.StartResponse;
 import com.internflow.screening.ScreeningDtos.SubmitRequest;
 import com.internflow.screening.ScreeningDtos.SubmitResponse;
 import com.internflow.screening.ScreeningDtos.TestInfoResponse;
+import com.internflow.screening.ScreeningDtos.TheoryStartResponse;
+import com.internflow.screening.ScreeningDtos.TheorySubmissionReview;
+import com.internflow.screening.ScreeningDtos.TheorySubmitRequest;
 
 import jakarta.validation.Valid;
 
@@ -43,6 +46,25 @@ public class StudentTestController {
             @PathVariable("applicationId") Long applicationId,
             @Valid @RequestBody SubmitRequest request) {
         return service.submit(studentId(jwt), applicationId, request);
+    }
+
+    @PostMapping("/theory/start")
+    public TheoryStartResponse startTheory(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable("applicationId") Long applicationId) {
+        return service.startTheory(studentId(jwt), applicationId);
+    }
+
+    @PostMapping("/theory/submit")
+    public SubmitResponse submitTheory(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable("applicationId") Long applicationId,
+            @Valid @RequestBody TheorySubmitRequest request) {
+        return service.submitTheory(studentId(jwt), applicationId, request);
+    }
+
+    @GetMapping("/theory/review")
+    public TheorySubmissionReview studentReview(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable("applicationId") Long applicationId) {
+        return service.studentTheoryReview(studentId(jwt), applicationId);
     }
 
     private Long studentId(Jwt jwt) {
