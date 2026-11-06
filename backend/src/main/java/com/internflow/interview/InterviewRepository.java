@@ -17,4 +17,6 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     boolean existsByApplicationIdAndStatusIn(Long applicationId, Collection<Interview.Status> statuses);
 
     Optional<Interview> findByIdAndStudentId(Long id, Long studentId);
+
+    Optional<Interview> findByRoomCode(String roomCode);
 }

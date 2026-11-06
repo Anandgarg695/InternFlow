@@ -35,6 +35,9 @@ import StudentCompletion from './pages/StudentCompletion'
 import VerifyCertificate from './pages/VerifyCertificate'
 import AdminUsers from './pages/AdminUsers'
 import Notifications from './pages/Notifications'
+import CompanyGradeTheory from './pages/CompanyGradeTheory'
+import InterviewRoom from './pages/InterviewRoom'
+import CompanyAnalytics from './pages/CompanyAnalytics'
 
 function App() {
   return (
@@ -45,9 +48,11 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyCertificate />} />
         <Route path="/verify/:code" element={<VerifyCertificate />} />
-        
-        <Route element={<ProtectedRoute />}>
         <Route path="/notifications" element={<Notifications />} />
+
+        {/* Authenticated Video Interview Room */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/interview-room/:roomCode" element={<InterviewRoom />} />
         </Route>
 
         <Route element={<ProtectedRoute role="STUDENT" />}>
@@ -59,13 +64,13 @@ function App() {
           <Route path="/student/applications/:id/test" element={<StudentTest />} />
           <Route path="/student/interviews" element={<StudentInterviews />} />
           <Route path="/student/offers" element={<StudentOffers />} />
-          <Route path="/student/offers" element={<StudentOffers />} />
           <Route path="/student/placements" element={<StudentPlacements />} />
           <Route path="/student/placements/:placementId/tasks" element={<StudentTasks />} />
           <Route path="/student/placements/:placementId/completion" element={<StudentCompletion />} />
         </Route>
         <Route element={<ProtectedRoute role="COMPANY" />}>
           <Route path="/company/dashboard" element={<CompanyDashboard />} />
+          <Route path="/company/analytics" element={<CompanyAnalytics />} />
           <Route path="/company/profile" element={<CompanyProfile />} />
           <Route path="/company/internships" element={<CompanyInternships />} />
           <Route path="/company/internships/new" element={<InternshipForm />} />
@@ -73,6 +78,7 @@ function App() {
           <Route path="/company/internships/:id/applicants" element={<CompanyApplicants />} />
           <Route path="/company/internships/:id/rounds" element={<CompanyRounds />} />
           <Route path="/company/internships/:id/rounds/:round" element={<CompanyTest />} />
+          <Route path="/company/internships/:id/rounds/:round/grade/:applicationId" element={<CompanyGradeTheory />} />
           <Route path="/company/internships/:id/interviews" element={<CompanyInterviews />} />
           <Route path="/company/internships/:id/offers" element={<CompanyOffers />} />
           <Route path="/company/mentors" element={<CompanyMentors />} />
@@ -96,4 +102,4 @@ function App() {
   )
 }
 
-export default App 
+export default App

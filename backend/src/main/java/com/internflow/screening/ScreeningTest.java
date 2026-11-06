@@ -37,11 +37,18 @@ public class ScreeningTest {
     @Column(name = "duration_minutes", nullable = false)
     private int durationMinutes;
 
+    @Column(name = "round_type", nullable = false)
+    private String roundType = "MCQ";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    public boolean isTheory() {
+        return "THEORY".equalsIgnoreCase(roundType);
+    }
 
     @PrePersist
     void onCreate() {
