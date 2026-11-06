@@ -27,12 +27,13 @@
 - [x] Theory round: written answers graded by the company (branch `feature/theory-round`)
 - [x] Video interview integration: built-in WebRTC rooms with signaling, in-call chat, mic/camera/screen-share controls (branch `feature/video-interviews`)
 - [x] Advanced analytics & reporting for companies: pipeline funnel, screening averages, conversion rates, and CSV export (branch `feature/analytics`)
+- [x] AI-assisted candidate shortlisting: multi-criteria candidate ranking, match score, key strengths extraction, and 1-click batch shortlisting (branch `feature/ai-shortlist`)
 
 ## Doing now
-- [ ] AI-assisted candidate shortlisting.
+- [ ] End-to-end integration polish and stress testing.
 
 ## Next (in this order)
-1. End-to-end integration polish and stress testing.
+1. Production deployment readiness & monitoring.
 
 ## Notes for teammate
 - Add anything useful here: decisions, problems you hit, things to watch out for.
@@ -43,6 +44,7 @@
 - Interviews: one active interview per application (enforced by a partial unique index). The server refuses overlapping times for the same student across companies. Online interviews automatically generate a secure built-in WebRTC room code (`room-<uuid>`), while optional external meeting links (Google Meet, Zoom) remain supported. Outcome and feedback are private to the company.
 - Video Interview Rooms: `/interview-room/:roomCode` offers browser-native WebRTC peer-to-peer video calling with audio/video toggles, screen sharing, and in-room chat. Signaling is handled via REST (`/api/interviews/room/{roomCode}/signal` and `/signals`) without external third-party dependencies.
 - Company Analytics & Reports: `/api/company/analytics` computes real-time recruitment funnel (Applications -> Shortlisted -> Assessed -> Interviewed -> Offered -> Hired), conversion percentages, test averages, offer acceptance rates, active interns, and task completion metrics. `/api/company/analytics/export` outputs full candidate-by-candidate recruitment journey CSVs. UI available at `/company/analytics` with interactive filtering by internship.
+- AI-Assisted Candidate Shortlisting: `AiShortlistService` computes an intelligent candidate fit score combining required skills match (50%), academic standing & CGPA (25%), and profile/cover letter depth (25%). Generates recommendation tiers (`STRONG_MATCH`, `MODERATE_MATCH`, `LOW_MATCH`) and actionable strength highlights. Supports 1-click batch shortlisting with threshold selection via `POST /api/company/internships/{id}/ai-shortlist/batch`.
 - Offers: application statuses now include OFFERED and SELECTED. Offers need a shortlisted applicant with no active interview, and are capped by the internship's openings (accepted plus pending). Accepting the last opening closes the internship automatically. Offers expire at the end of expires_on (Indian time); a once-a-minute job and every offer endpoint turn expired offers back into SHORTLISTED applications. Accepted offers cannot be withdrawn yet. Declining sets the application to WITHDRAWN.
 - Placements: created automatically when a student accepts an offer (start = offer start date, end = start + internship duration in weeks). Placement status is ACTIVE for now; the phase (starts soon, ongoing, ended) is worked out from the dates in Indian time.
 - Mentors: a company invites a mentor by email, and the mentor must accept (table mentor_links). Only accepted mentors can be assigned to interns. A mentor with active interns cannot be removed. Mentors see only an intern's name, email, internship and dates, never profile, scores or feedback. Known limitation: the invite endpoint reveals whether an email belongs to a mentor account (to harden later).
