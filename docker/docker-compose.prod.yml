@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: internflow-db-prod
+    restart: always
+    environment:
+      POSTGRES_DB: internflow
+      POSTGRES_USER: internflow
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-internflow_prod_secure}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U internflow -d internflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata-prod:/var/lib/postgresql/data
+    networks:
+      - internflow-net
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: internflow-backend-prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/internflow
+      SPRING_DATASOURCE_USERNAME: internflow
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-internflow_prod_secure}
+      APP_JWT_SECRET: ${JWT_SECRET:-please_set_a_long_random_jwt_secret_in_production}
+      SERVER_PORT: 8081
+    networks:
+      - internflow-net
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: internflow-frontend-prod
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "${PORT:-80}:80"
+    networks:
+      - internflow-net
+
+networks:
+  internflow-net:
+    driver: bridge
+
+volumes:
+  pgdata-prod:

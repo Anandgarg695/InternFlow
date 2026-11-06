@@ -28,15 +28,22 @@
 - [x] Video interview integration: built-in WebRTC rooms with signaling, in-call chat, mic/camera/screen-share controls (branch `feature/video-interviews`)
 - [x] Advanced analytics & reporting for companies: pipeline funnel, screening averages, conversion rates, and CSV export (branch `feature/analytics`)
 - [x] AI-assisted candidate shortlisting: multi-criteria candidate ranking, match score, key strengths extraction, and 1-click batch shortlisting (branch `feature/ai-shortlist`)
+- [x] Production deployment readiness & monitoring: multi-stage Dockerfiles, Nginx SPA config, full production Docker Compose stack, unit test suite, and enhanced health metrics (branch `feature/production-readiness`)
 
 ## Doing now
-- [ ] End-to-end integration polish and stress testing.
+- [ ] Ready for production release and demo walkthrough.
 
 ## Next (in this order)
-1. Production deployment readiness & monitoring.
+1. Team demo walkthrough and feedback incorporation.
 
 ## Notes for teammate
 - Add anything useful here: decisions, problems you hit, things to watch out for.
+- Production Deployment:
+  - `backend/Dockerfile`: multi-stage build packaging executable Spring Boot JAR on `eclipse-temurin:21-jre-alpine` running as non-root `appuser`.
+  - `frontend/Dockerfile` & `nginx.conf`: multi-stage build serving production Vite bundle with Nginx, gzip compression, SPA fallback routing, and reverse-proxy `/api/` forwarding to backend.
+  - `docker/docker-compose.prod.yml`: orchestrates postgres, backend, and frontend with automated healthchecks, volume persistence, and environment-driven configurations.
+  - Monitoring: `/api/health` provides real-time JVM metrics (memory used, free, max, uptime, available cores) and database connection status.
+  - Automated tests: `SkillGapServiceTest` and `AiShortlistServiceTest` test skill gap extraction, multi-dimensional AI scoring, and candidate ranking.
 - Internship deadlines are dates in Indian time. A company needs a company name in its profile before it can publish.
 - Application statuses: APPLIED, SHORTLISTED, REJECTED, WITHDRAWN. A withdrawn application is final (no re-apply). Students need a complete profile to apply.
 - Screening tests: one per internship, multiple choice (4 options), timed. The server owns the clock (deadline saved at start, 15 seconds of grace on submit). Correct answers are never sent to students. A test is locked once any student has started it.
