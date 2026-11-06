@@ -1,21 +1,27 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 
 const LETTERS = ['A', 'B', 'C', 'D']
 const MAX_QUESTIONS = 50
 
-const blankQuestion = () => ({ text: '', options: ['', '', '', ''], correctOption: 0 })
+const blankMcq = () => ({ text: '', options: ['', '', '', ''], correctOption: 0 })
+const blankTheory = () => ({ text: '', maxScore: 10 })
 
 const inputClass =
   'mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none'
 
 export default function CompanyTest() {
   const { id, round } = useParams()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+
   const [internshipTitle, setInternshipTitle] = useState('')
+  const [roundType, setRoundType] = useState(searchParams.get('type') || 'MCQ')
   const [title, setTitle] = useState('')
   const [duration, setDuration] = useState('30')
-  const [questions, setQuestions] = useState([blankQuestion()])
+  const [questions, setQuestions] = useState([blankMcq()])
+  const [theoryQuestions, setTheoryQuestions] = useState([blankTheory()])
   const [exists, setExists] = useState(false)
   const [locked, setLocked] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -23,96 +29,110 @@ export default function CompanyTest() {
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
 
+  const isTheory = roundType === 'THEORY'
+
   useEffect(() => {
     api.get(`/company/internships/${id}`)
       .then((res) => setInternshipTitle(res.data.title))
       .catch(() => {})
 
-    api.get(`/company/internships/${id}/rounds/${round}/test`)
+    const endpoint = isTheory
+      ? `/company/internships/${id}/rounds/${round}/theory`
+      : `/company/internships/${id}/rounds/${round}/test`
+
+    api.get(endpoint)
       .then((res) => {
         setTitle(res.data.title)
         setDuration(String(res.data.durationMinutes))
-        setQuestions(
-          res.data.questions.map((q) => ({
-            text: q.text,
-            options: [...q.options],
-            correctOption: q.correctOption,
-          })),
-        )
         setExists(true)
         setLocked(res.data.locked)
+        if (isTheory) {
+          setTheoryQuestions(res.data.questions.map((q) => ({ text: q.text, maxScore: q.maxScore })))
+        } else {
+          setQuestions(
+            res.data.questions.map((q) => ({
+              text: q.text,
+              options: [...q.options],
+              correctOption: q.correctOption,
+            })),
+          )
+        }
       })
       .catch((err) => {
         if (err.response?.status !== 404) setError('Could not load the test')
       })
       .finally(() => setLoading(false))
-  }, [id, round])
+  }, [id, round, isTheory])
 
   const touch = () => setSaved(false)
 
-  const updateQuestion = (index, patch) => {
+  const updateMcqQuestion = (index, patch) => {
     touch()
     setQuestions((qs) => qs.map((q, i) => (i === index ? { ...q, ...patch } : q)))
   }
 
-  const updateOption = (qIndex, oIndex, value) => {
+  const updateMcqOption = (qIndex, oIndex, value) => {
     touch()
     setQuestions((qs) =>
       qs.map((q, i) =>
-        i === qIndex ? { ...q, options: q.options.map((o, j) => (j === oIndex ? value : o)) } : q,
+        i === qIndex
+          ? { ...q, options: q.options.map((opt, j) => (j === oIndex ? value : opt)) }
+          : q,
       ),
     )
   }
 
-  const addQuestion = () => {
+  const updateTheoryQuestion = (index, patch) => {
     touch()
-    setQuestions((qs) => [...qs, blankQuestion()])
+    setTheoryQuestions((qs) => qs.map((q, i) => (i === index ? { ...q, ...patch } : q)))
   }
 
-  const removeQuestion = (index) => {
-    touch()
-    setQuestions((qs) => qs.filter((_, i) => i !== index))
-  }
-
-  const onSubmit = async (e) => {
+  const save = async (e) => {
     e.preventDefault()
     setError('')
     setSaved(false)
+
+    const dur = parseInt(duration, 10)
+    if (Number.isNaN(dur) || dur < 5 || dur > 180) {
+      setError('Duration must be between 5 and 180 minutes')
+      return
+    }
+
     setSaving(true)
     try {
-      const res = await api.put(`/company/internships/${id}/rounds/${round}/test`, {
-        title: title.trim(),
-        durationMinutes: duration === '' ? null : Number(duration),
-        questions: questions.map((q) => ({
-          text: q.text.trim(),
-          options: q.options.map((o) => o.trim()),
-          correctOption: q.correctOption,
-        })),
-      })
+      if (isTheory) {
+        await api.put(`/company/internships/${id}/rounds/${round}/theory`, {
+          title: title.trim(),
+          durationMinutes: dur,
+          questions: theoryQuestions.map((q) => ({ text: q.text.trim(), maxScore: Number(q.maxScore) || 10 })),
+        })
+      } else {
+        await api.put(`/company/internships/${id}/rounds/${round}/test`, {
+          title: title.trim(),
+          durationMinutes: dur,
+          questions: questions.map((q) => ({
+            text: q.text.trim(),
+            options: q.options.map((o) => o.trim()),
+            correctOption: q.correctOption,
+          })),
+        })
+      }
       setExists(true)
-      setLocked(res.data.locked)
       setSaved(true)
     } catch (err) {
-      const data = err.response?.data
-      const firstField = data?.fields ? Object.values(data.fields)[0] : null
-      setError(firstField ? `${data.error}: ${firstField}` : data?.error || 'Could not save the test')
+      setError(err.response?.data?.error || 'Could not save the round')
     } finally {
       setSaving(false)
     }
   }
 
-  const remove = async () => {
-    if (!window.confirm('Delete this test? This cannot be undone.')) return
-    setError('')
+  const deleteRound = async () => {
+    if (!window.confirm('Delete this round? You can only delete the latest round if no students have started.')) return
     try {
       await api.delete(`/company/internships/${id}/rounds/${round}/test`)
-      setTitle('')
-      setDuration('30')
-      setQuestions([blankQuestion()])
-      setExists(false)
-      setSaved(false)
+      navigate(`/company/internships/${id}/rounds`)
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not delete the test')
+      setError(err.response?.data?.error || 'Could not delete the round')
     }
   }
 
@@ -120,136 +140,203 @@ export default function CompanyTest() {
 
   return (
     <div className="mx-auto max-w-3xl">
-        <Link to={`/company/internships/${id}/rounds`} className="text-sm text-slate-600 hover:text-indigo-600">
-           ← Back to rounds
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold text-indigo-600">Round {round} test</h1>
-      {internshipTitle && <p className="text-slate-600">{internshipTitle}</p>}
-      <p className="mt-1 text-sm text-slate-500">
-        Only shortlisted students can take this test. Each student gets one attempt, and the timer starts
-        when they click Start.
-      </p>
+      <Link to={`/company/internships/${id}/rounds`} className="text-sm text-slate-600 hover:text-indigo-600">
+        ← Back to rounds
+      </Link>
+
+      <div className="mt-2 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-indigo-600">
+            Round {round}: {isTheory ? 'Written Theory Round' : 'Screening MCQ Test'}
+          </h1>
+          {internshipTitle && <p className="text-slate-600">{internshipTitle}</p>}
+        </div>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            isTheory ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+          }`}
+        >
+          {isTheory ? 'Theory (Manual Grading)' : 'MCQ (Auto Grading)'}
+        </span>
+      </div>
 
       {locked && (
-        <p className="mt-4 rounded-md bg-amber-50 p-3 text-sm text-amber-800">
-          Students have already started this test, so it can no longer be edited or deleted.
-        </p>
+        <div className="mt-4 rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+          Students have already started taking this round. It is locked and can no longer be modified.
+        </div>
       )}
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-6">
-        <fieldset disabled={locked} className="space-y-6">
-          <div className="grid gap-4 rounded-xl bg-white p-6 shadow sm:grid-cols-3">
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium" htmlFor="title">Test title</label>
-              <input
-                id="title"
-                value={title}
-                required
-                onChange={(e) => {
-                  touch()
-                  setTitle(e.target.value)
-                }}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium" htmlFor="duration">Time limit (5 to 180 min)</label>
-              <input
-                id="duration"
-                type="number"
-                min="5"
-                max="180"
-                required
-                value={duration}
-                onChange={(e) => {
-                  touch()
-                  setDuration(e.target.value)
-                }}
-                className={inputClass}
-              />
-            </div>
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {saved && <p className="mt-4 text-sm text-green-600">Saved successfully!</p>}
+
+      <form onSubmit={save} className="mt-6 space-y-6">
+        <div className="rounded-xl bg-white p-6 shadow space-y-4">
+          <div>
+            <label className="block text-sm font-medium">Round title</label>
+            <input
+              disabled={locked}
+              value={title}
+              onChange={(e) => { touch(); setTitle(e.target.value) }}
+              placeholder={isTheory ? 'e.g. System Design & Architectural Theory' : 'e.g. Core Fundamentals Test'}
+              required
+              className={inputClass}
+            />
           </div>
-
-          {questions.map((q, qi) => (
-            <div key={qi} className="rounded-xl bg-white p-6 shadow">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold">Question {qi + 1}</h2>
-                {questions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeQuestion(qi)}
-                    className="text-sm text-red-600 hover:underline"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-
-              <textarea
-                rows={2}
-                required
-                value={q.text}
-                onChange={(e) => updateQuestion(qi, { text: e.target.value })}
-                placeholder="Write the question"
-                className={inputClass}
-              />
-
-              <p className="mt-3 text-xs text-slate-500">Select the radio button next to the correct answer.</p>
-              <div className="mt-2 space-y-2">
-                {q.options.map((option, oi) => (
-                  <div key={oi} className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name={`correct-${qi}`}
-                      checked={q.correctOption === oi}
-                      onChange={() => updateQuestion(qi, { correctOption: oi })}
-                      aria-label={`Option ${LETTERS[oi]} is correct`}
-                    />
-                    <span className="w-5 text-sm font-medium text-slate-500">{LETTERS[oi]}</span>
-                    <input
-                      required
-                      value={option}
-                      onChange={(e) => updateOption(qi, oi, e.target.value)}
-                      placeholder={`Option ${LETTERS[oi]}`}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={addQuestion}
-            disabled={questions.length >= MAX_QUESTIONS}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-50"
-          >
-            Add question
-          </button>
-        </fieldset>
-
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {saved && <p className="text-sm text-green-600">Test saved.</p>}
-
-        <div className="flex items-center gap-4">
-          <button
-            type="submit"
-            disabled={saving || locked}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500 disabled:opacity-60"
-          >
-            {saving ? 'Saving...' : exists ? 'Save changes' : 'Create test'}
-          </button>
-          {exists && !locked && (
-            <button
-              type="button"
-              onClick={remove}
-              className="rounded-md border border-red-300 px-4 py-2 text-red-600 hover:bg-red-50"
-            >
-              Delete test
-            </button>
-          )}
+          <div>
+            <label className="block text-sm font-medium">Duration (minutes, 5 to 180)</label>
+            <input
+              type="number"
+              disabled={locked}
+              value={duration}
+              onChange={(e) => { touch(); setDuration(e.target.value) }}
+              min="5"
+              max="180"
+              required
+              className={inputClass}
+            />
+          </div>
         </div>
+
+        {/* Questions list */}
+        {isTheory ? (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-800">Theory Questions ({theoryQuestions.length})</h2>
+            {theoryQuestions.map((q, idx) => (
+              <div key={idx} className="rounded-xl bg-white p-6 shadow">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-700">Question {idx + 1}</span>
+                  {!locked && theoryQuestions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => { touch(); setTheoryQuestions((qs) => qs.filter((_, i) => i !== idx)) }}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="mt-3">
+                  <label className="block text-xs text-slate-500">Question prompt</label>
+                  <textarea
+                    rows={3}
+                    disabled={locked}
+                    value={q.text}
+                    onChange={(e) => updateTheoryQuestion(idx, { text: e.target.value })}
+                    placeholder="Enter the question or problem scenario for students to explain..."
+                    required
+                    className={inputClass}
+                  />
+                </div>
+                <div className="mt-3 w-40">
+                  <label className="block text-xs text-slate-500">Max score points</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    disabled={locked}
+                    value={q.maxScore}
+                    onChange={(e) => updateTheoryQuestion(idx, { maxScore: e.target.value })}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            ))}
+
+            {!locked && theoryQuestions.length < 30 && (
+              <button
+                type="button"
+                onClick={() => { touch(); setTheoryQuestions((qs) => [...qs, blankTheory()]) }}
+                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                + Add Question
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-800">Multiple-Choice Questions ({questions.length})</h2>
+            {questions.map((q, idx) => (
+              <div key={idx} className="rounded-xl bg-white p-6 shadow">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-700">Question {idx + 1}</span>
+                  {!locked && questions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => { touch(); setQuestions((qs) => qs.filter((_, i) => i !== idx)) }}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="mt-3">
+                  <label className="block text-xs text-slate-500">Question text</label>
+                  <input
+                    disabled={locked}
+                    value={q.text}
+                    onChange={(e) => updateMcqQuestion(idx, { text: e.target.value })}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+                <div className="mt-3 space-y-2">
+                  <label className="block text-xs text-slate-500">Options (select the correct radio button)</label>
+                  {q.options.map((opt, optIdx) => (
+                    <div key={optIdx} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        disabled={locked}
+                        name={`correct-${idx}`}
+                        checked={q.correctOption === optIdx}
+                        onChange={() => updateMcqQuestion(idx, { correctOption: optIdx })}
+                      />
+                      <span className="w-5 text-sm font-medium">{LETTERS[optIdx]}</span>
+                      <input
+                        disabled={locked}
+                        value={opt}
+                        onChange={(e) => updateMcqOption(idx, optIdx, e.target.value)}
+                        required
+                        className="flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {!locked && questions.length < MAX_QUESTIONS && (
+              <button
+                type="button"
+                onClick={() => { touch(); setQuestions((qs) => [...qs, blankMcq()]) }}
+                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                + Add Question
+              </button>
+            )}
+          </div>
+        )}
+
+        {!locked && (
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-md bg-indigo-600 px-6 py-2 font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+            >
+              {saving ? 'Saving...' : 'Save round'}
+            </button>
+            {exists && (
+              <button
+                type="button"
+                onClick={deleteRound}
+                className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                Delete round
+              </button>
+            )}
+          </div>
+        )}
       </form>
     </div>
   )
