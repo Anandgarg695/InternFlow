@@ -11,8 +11,19 @@ export default function StudentInternships() {
   const [filters, setFilters] = useState({ q: '', workMode: '' })
   const [page, setPage] = useState(0)
   const [data, setData] = useState(null)
+  const [scores, setScores] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    api.get('/student/skillgap/scores')
+      .then((res) => {
+        const map = {}
+        res.data.forEach((s) => { map[s.internshipId] = s.matchScore })
+        setScores(map)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const params = { page, size: PAGE_SIZE }
@@ -74,9 +85,24 @@ export default function StudentInternships() {
             <Link
               key={item.id}
               to={`/student/internships/${item.id}`}
-              className="block rounded-xl bg-white p-5 shadow hover:shadow-md"
+              className="block rounded-xl bg-white p-5 shadow transition hover:shadow-md"
             >
-              <h2 className="font-semibold text-slate-800">{item.title}</h2>
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="font-semibold text-slate-800">{item.title}</h2>
+                {scores[item.id] !== undefined && (
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      scores[item.id] >= 75
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : scores[item.id] >= 50
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {scores[item.id]}% match
+                  </span>
+                )}
+              </div>
               <p className="mt-1 text-sm text-indigo-600">{item.companyName || 'Company'}</p>
               <p className="mt-2 text-sm text-slate-600">
                 {WORK_MODES[item.workMode]}

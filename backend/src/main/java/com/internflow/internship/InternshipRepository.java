@@ -11,5 +11,7 @@ public interface InternshipRepository
 
     List<Internship> findByCompanyIdOrderByCreatedAtDesc(Long companyId);
 
+    List<Internship> findByStatus(InternshipStatus status);
+
     Optional<Internship> findByIdAndCompanyId(Long id, Long companyId);
 }
