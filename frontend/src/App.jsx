@@ -37,6 +37,7 @@ import AdminUsers from './pages/AdminUsers'
 import Notifications from './pages/Notifications'
 import CompanyGradeTheory from './pages/CompanyGradeTheory'
 import InterviewRoom from './pages/InterviewRoom'
+import CompanyAnalytics from './pages/CompanyAnalytics'
 
 function App() {
   return (
@@ -69,6 +70,7 @@ function App() {
         </Route>
         <Route element={<ProtectedRoute role="COMPANY" />}>
           <Route path="/company/dashboard" element={<CompanyDashboard />} />
+          <Route path="/company/analytics" element={<CompanyAnalytics />} />
           <Route path="/company/profile" element={<CompanyProfile />} />
           <Route path="/company/internships" element={<CompanyInternships />} />
           <Route path="/company/internships/new" element={<InternshipForm />} />
